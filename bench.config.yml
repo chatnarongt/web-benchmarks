@@ -1,20 +1,20 @@
 competitors:
-  # - name: bun-with-elysia
-  #   database: postgres
-  # - name: node-with-elysia
-  #   database: postgres
-  # - name: dotnet-minimal-apis
-  #   database: postgres
-  # - name: dotnet-minimal-apis-mssql
-  #   database: mssql
-  # - name: dotnet-core
-  #   database: postgres
+  - name: bun-with-elysia
+    database: postgres
+  - name: node-with-elysia
+    database: postgres
+  - name: dotnet-minimal-apis
+    database: postgres
+  - name: dotnet-minimal-apis-mssql
+    database: mssql
+  - name: dotnet-core
+    database: postgres
   - name: dotnet-core-mssql
     database: mssql
 test:
   types:
-    # - plaintext
-    # - json
+    - plaintext
+    - json
     - database/single-read
     - database/multiple-read
     - database/single-write
