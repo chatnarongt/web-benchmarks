@@ -1,3 +1,4 @@
+/// <reference types="bun-types" />
 export function generateK8sManifest(name: string, resources: any): string {
   return `
 ---
@@ -46,7 +47,7 @@ spec:
 `;
 }
 
-export function generatePostgresManifest(): string {
+export function generatePostgresManifest(resources: any): string {
   return `
 ---
 apiVersion: v1
@@ -90,11 +91,11 @@ spec:
           mountPath: /docker-entrypoint-initdb.d
         resources:
           requests:
-            cpu: "4"
-            memory: "8Gi"
+            cpu: "${resources.requests.cpu}"
+            memory: "${resources.requests.memory}"
           limits:
-            cpu: "4"
-            memory: "8Gi"
+            cpu: "${resources.limits.cpu}"
+            memory: "${resources.limits.memory}"
       volumes:
       - name: init-script
         configMap:
@@ -114,7 +115,7 @@ spec:
 `;
 }
 
-export function generateMssqlManifest(): string {
+export function generateMssqlManifest(resources: any): string {
   return `
 ---
 apiVersion: v1
@@ -201,11 +202,11 @@ spec:
           mountPath: /scripts
         resources:
           requests:
-            cpu: "4"
-            memory: "8Gi"
+            cpu: "${resources.requests.cpu}"
+            memory: "${resources.requests.memory}"
           limits:
-            cpu: "4"
-            memory: "8Gi"
+            cpu: "${resources.limits.cpu}"
+            memory: "${resources.limits.memory}"
       volumes:
       - name: scripts
         configMap:

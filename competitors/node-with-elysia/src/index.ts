@@ -17,13 +17,41 @@ new Elysia({ adapter: node() })
   .get("/json", () => ({ message: "Hello World!" }))
   .get("/database/single-read", async () => {
     const id = Math.floor(Math.random() * 10000) + 1;
-    const [world] = await sql`SELECT * FROM World WHERE id = ${id}`;
+    const [world] = await sql`SELECT id, randomnumber AS "randomNumber" FROM World WHERE id = ${id}`;
     return world;
   })
   .get("/database/multiple-read", async () => {
     const limit = 20;
     const offset = Math.floor(Math.random() * (10000 - limit));
-    return await sql`SELECT * FROM World LIMIT ${limit} OFFSET ${offset}`;
+    return await sql`SELECT id, randomnumber AS "randomNumber" FROM World LIMIT ${limit} OFFSET ${offset}`;
+  })
+  .get("/database/single-write", async () => {
+    const id = Math.floor(Math.random() * 10000) + 1;
+    const [world] = await sql`SELECT id, randomnumber AS "randomNumber" FROM World WHERE id = ${id}`;
+    if (world) {
+      const newRandomNumber = Math.floor(Math.random() * 10000) + 1;
+      await sql`UPDATE World SET randomNumber = ${newRandomNumber} WHERE id = ${id}`;
+      world.randomNumber = newRandomNumber;
+    }
+    return world;
+  })
+  .get("/database/multiple-write", async () => {
+    const limit = 20;
+    const offset = Math.floor(Math.random() * (10000 - limit));
+    const worlds = await sql`SELECT id, randomnumber AS "randomNumber" FROM World LIMIT ${limit} OFFSET ${offset}`;
+
+    if (worlds && worlds.length > 0) {
+      const ids = new Array(worlds.length);
+      const rns = new Array(worlds.length);
+      for (let i = 0; i < worlds.length; i++) {
+        ids[i] = worlds[i].id;
+        rns[i] = Math.floor(Math.random() * 10000) + 1;
+        worlds[i].randomNumber = rns[i];
+      }
+      await sql`UPDATE World SET randomnumber = u.rn FROM unnest(${ids}::int[], ${rns}::int[]) AS u(id, rn) WHERE World.id = u.id`;
+    }
+
+    return worlds;
   })
   .listen(3000, ({ hostname, port }) => {
     console.log(

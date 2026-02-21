@@ -1,0 +1,104 @@
+{
+  "startTime": "2026-02-21T14:26:58.467Z",
+  "endTime": "2026-02-21T14:30:00.717Z",
+  "configs": {
+    "competitors": [
+      {
+        "name": "dotnet-core-mssql",
+        "database": "mssql"
+      }
+    ],
+    "test": {
+      "types": [
+        "database/single-read",
+        "database/multiple-read",
+        "database/single-write",
+        "database/multiple-write"
+      ],
+      "concurrency": 1,
+      "connections": 128,
+      "threads": 4,
+      "duration": "10s",
+      "warmupDuration": "5s",
+      "idleWaitDuration": "5s",
+      "databaseSettleDuration": "30s"
+    },
+    "resources": {
+      "replicas": 1,
+      "requests": {
+        "cpu": "1",
+        "memory": "512Mi"
+      },
+      "limits": {
+        "cpu": "1",
+        "memory": "512Mi"
+      }
+    },
+    "databaseResources": {
+      "requests": {
+        "cpu": "8",
+        "memory": "4Gi"
+      },
+      "limits": {
+        "cpu": "8",
+        "memory": "4Gi"
+      }
+    }
+  },
+  "result": {
+    "dotnet-core-mssql": {
+      "database/single-read": {
+        "totalRequests": 24535,
+        "requestsPerSecond": 2439.26,
+        "avgResponseTimeSecs": 0.05266,
+        "maxResponseTimeSecs": 0.20724,
+        "errorRatePercent": 0,
+        "idleCpuUsage": 0,
+        "peakCpuUsage": 397,
+        "idleMemoryUsage": 0,
+        "peakMemoryUsage": 64,
+        "idleConnectionCount": 84,
+        "peakConnectionCount": 100
+      },
+      "database/multiple-read": {
+        "totalRequests": 41628,
+        "requestsPerSecond": 4126.48,
+        "avgResponseTimeSecs": 0.03102,
+        "maxResponseTimeSecs": 0.10615999999999999,
+        "errorRatePercent": 0,
+        "idleCpuUsage": 374,
+        "peakCpuUsage": 374,
+        "idleMemoryUsage": 70,
+        "peakMemoryUsage": 73,
+        "idleConnectionCount": 100,
+        "peakConnectionCount": 100
+      },
+      "database/single-write": {
+        "totalRequests": 29458,
+        "requestsPerSecond": 2917.36,
+        "avgResponseTimeSecs": 0.0436,
+        "maxResponseTimeSecs": 0.15212,
+        "errorRatePercent": 0,
+        "idleCpuUsage": 340,
+        "peakCpuUsage": 635,
+        "idleMemoryUsage": 77,
+        "peakMemoryUsage": 78,
+        "idleConnectionCount": 100,
+        "peakConnectionCount": 100
+      },
+      "database/multiple-write": {
+        "totalRequests": 7310,
+        "requestsPerSecond": 724.98,
+        "avgResponseTimeSecs": 0.17485,
+        "maxResponseTimeSecs": 0.47806,
+        "errorRatePercent": 0,
+        "idleCpuUsage": 244,
+        "peakCpuUsage": 244,
+        "idleMemoryUsage": 77,
+        "peakMemoryUsage": 79,
+        "idleConnectionCount": 100,
+        "peakConnectionCount": 100
+      }
+    }
+  }
+}

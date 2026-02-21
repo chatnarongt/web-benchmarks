@@ -3,7 +3,9 @@ import * as fs from "fs";
 import * as yaml from "js-yaml";
 import { $ } from "bun";
 import { generateK8sManifest, generatePostgresManifest, generateMssqlManifest } from "./manifests.ts";
-import { parseWrkOutput } from "./parser.ts";
+import { parseWrkOutput, mergePodMetrics, parseTimeToSeconds } from "./parser.ts";
+import { setupMetricsServer } from "./setup-metrics.ts";
+import { getPodMetrics, getDbConnectionCount } from "./metrics.ts";
 
 interface CompetitorConfig {
     name: string;
@@ -17,10 +19,17 @@ interface BenchmarkConfig {
         concurrency: number;
         connections: number;
         duration: string;
+        warmupDuration: string;
+        idleWaitDuration: string;
+        databaseSettleDuration: string;
         threads: number;
     };
     resources: {
         replicas: number;
+        requests: { cpu: string; memory: string };
+        limits: { cpu: string; memory: string };
+    };
+    databaseResources: {
         requests: { cpu: string; memory: string };
         limits: { cpu: string; memory: string };
     };
@@ -29,6 +38,9 @@ interface BenchmarkConfig {
 async function main() {
     const startTime = new Date().toISOString();
     console.log(`🚀 Starting Benchmark Orchestration Pipeline at ${startTime}`);
+
+    // Setup metrics server
+    await setupMetricsServer();
 
     // 1. Parse configuration
     const fileContents = fs.readFileSync("bench.config.yml", "utf8");
@@ -53,7 +65,7 @@ async function main() {
             // 2. Deploy required database for this competitor
             if (dbType === "postgres") {
                 console.log(`[${competitor}] ☸️  Deploying PostgreSQL database...`);
-                const pgManifest = generatePostgresManifest();
+                const pgManifest = generatePostgresManifest(config.databaseResources);
                 const pgManifestPath = `/tmp/postgres-manifest.yml`;
                 fs.writeFileSync(pgManifestPath, pgManifest);
                 await $`kubectl apply -f ${pgManifestPath}`;
@@ -62,7 +74,7 @@ async function main() {
                 console.log(`[${competitor}] ✅ PostgreSQL ready.`);
             } else if (dbType === "mssql") {
                 console.log(`[${competitor}] ☸️  Deploying MSSQL database...`);
-                const mssqlManifest = generateMssqlManifest();
+                const mssqlManifest = generateMssqlManifest(config.databaseResources);
                 const mssqlManifestPath = `/tmp/mssql-manifest.yml`;
                 fs.writeFileSync(mssqlManifestPath, mssqlManifest);
                 await $`kubectl apply -f ${mssqlManifestPath}`;
@@ -73,9 +85,10 @@ async function main() {
 
             // Wait for the database to settle if one was deployed
             if (dbType) {
-                const settleTime = dbType === "mssql" ? 30000 : 15000;
-                console.log(`[${competitor}] ⏳ Waiting ${settleTime / 1000}s for database to settle...`);
-                await new Promise(resolve => setTimeout(resolve, settleTime));
+                const settleDurationStr = config.test.databaseSettleDuration || (dbType === "mssql" ? "30s" : "15s");
+                const settleTimeMs = parseTimeToSeconds(settleDurationStr) * 1000;
+                console.log(`[${competitor}] ⏳ Waiting ${settleDurationStr} for database to settle...`);
+                await new Promise(resolve => setTimeout(resolve, settleTimeMs));
             }
 
             // 3. Build Docker Image
@@ -108,23 +121,38 @@ async function main() {
                     endpoint = '/database/single-read';
                 } else if (testType === 'database/multiple-read') {
                     endpoint = '/database/multiple-read';
+                } else if (testType === 'database/single-write') {
+                    endpoint = '/database/single-write';
+                } else if (testType === 'database/multiple-write') {
+                    endpoint = '/database/multiple-write';
                 }
                 const targetUrl = `http://${competitor}-service${endpoint}`;
                 const sanitizedTestType = testType.replace(/\//g, "-");
 
                 // --- WARMUP PHASE ---
-                console.log(`\n[${competitor}] 🔥 Warming up for '${testType}' (30s)...`);
+                const warmupDuration = config.test.warmupDuration || "30s";
+                console.log(`\n[${competitor}] 🔥 Warming up for '${testType}' (${warmupDuration})...`);
                 try {
                     await $`kubectl run wrk-warmup-${competitor}-${sanitizedTestType} --rm -i \
                         --image=skandyla/wrk \
                         --restart=Never \
-                        -- -t ${config.test.threads} -c ${config.test.connections} -d 30s ${targetUrl}`.quiet();
+                        -- -t ${config.test.threads} -c ${config.test.connections} -d ${warmupDuration} ${targetUrl}`.quiet();
                 } catch (e) {
                     console.warn(`[${competitor}] ⚠️ Warmup failed (ignoring):`, e);
                 }
 
+                const idleWaitDurationStr = config.test.idleWaitDuration || "15s";
+                const idleWaitMs = parseTimeToSeconds(idleWaitDurationStr) * 1000;
+                console.log(`[${competitor}] ⏳ Waiting ${idleWaitDurationStr} for resources to settle before test...`);
+                await new Promise(resolve => setTimeout(resolve, idleWaitMs));
+
                 // --- ACTUAL TEST PHASE ---
                 console.log(`[${competitor}] 🧨 Running load test '${testType}' with 'wrk' for ${config.test.duration}...`);
+
+                // Capture Idle metrics before test
+                const idleMetrics = await getPodMetrics(competitor);
+                const idleConnections = dbType ? await getDbConnectionCount(dbType) : 0;
+                console.log(`[${competitor}] 💤 Idle Metrics -> CPU: ${idleMetrics.cpu}m, RAM: ${idleMetrics.memory}Mi, Connections: ${idleConnections}`);
 
                 // Run wrk and capture output. We run it as a Job or a standalone Pod.
                 const wrkCommand = `wrk -t ${config.test.threads} -c ${config.test.connections} -d ${config.test.duration} --latency ${targetUrl}`;
@@ -133,13 +161,35 @@ async function main() {
                 // Ensure any leftover pod is deleted
                 await $`kubectl delete pod wrk-test-${competitor}-${sanitizedTestType} --ignore-not-found`.quiet();
 
+                // Start tracking peak metrics in the background
+                let peakCpu = idleMetrics.cpu;
+                let peakMemory = idleMetrics.memory;
+                let peakConnections = idleConnections;
+                let testRunning = true;
+
+                const metricInterval = setInterval(async () => {
+                    if (!testRunning) return;
+                    const [m, c] = await Promise.all([
+                        getPodMetrics(competitor),
+                        dbType ? getDbConnectionCount(dbType) : Promise.resolve(0)
+                    ]);
+                    if (m.cpu > peakCpu) peakCpu = m.cpu;
+                    if (m.memory > peakMemory) peakMemory = m.memory;
+                    if (c > peakConnections) peakConnections = c;
+                }, 1000);
+
                 const testOutput = await $`kubectl run wrk-test-${competitor}-${sanitizedTestType} --rm -i \
             --image=skandyla/wrk \
             --restart=Never \
             -- -t ${config.test.threads} -c ${config.test.connections} -d ${config.test.duration} --latency ${targetUrl}`.text();
 
+                testRunning = false;
+                clearInterval(metricInterval);
+
                 console.log(`[${competitor}] 📊 Load test '${testType}' complete. Parsing results...`);
-                const metrics = parseWrkOutput(testOutput);
+                let metrics = parseWrkOutput(testOutput);
+                metrics = mergePodMetrics(metrics, idleMetrics.cpu, peakCpu, idleMetrics.memory, peakMemory, idleConnections, peakConnections);
+
                 finalReport[competitor][testType] = metrics;
                 console.log(`[${competitor}] 📈 Metrics (${testType}):`, metrics);
 
@@ -149,7 +199,7 @@ async function main() {
 
         } catch (error) {
             console.error(`[${competitor}] ❌ Benchmark failed:`, error);
-            finalReport[competitor] = { error: String(error) };
+            finalReport[competitor].error = String(error);
         } finally {
             // 6. Cleanup competitor and database
             console.log(`[${competitor}] 🧹 Cleaning up resources...`);
@@ -184,7 +234,10 @@ async function main() {
     }
     const reportPath = `${reportDir}/${startTime}.json`;
     console.log(`🎉 All benchmarks complete. Writing ${reportPath}`);
+    const endTime = new Date().toISOString();
     const exportReport = {
+        startTime,
+        endTime,
         configs: config,
         result: finalReport
     };

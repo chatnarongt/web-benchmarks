@@ -1,5 +1,6 @@
+/// <reference types="bun-types" />
 // Helper to safely convert wrk time format to seconds
-function parseTimeToSeconds(timeStr: string): number {
+export function parseTimeToSeconds(timeStr: string): number {
     if (!timeStr) return 0;
     const value = parseFloat(timeStr);
     if (timeStr.includes("ms")) return value / 1000;
@@ -58,4 +59,16 @@ export function parseWrkOutput(output: string) {
     }
 
     return metrics;
+}
+
+export function mergePodMetrics(parsedMetrics: any, idleCpu: number, peakCpu: number, idleMemory: number, peakMemory: number, idleConnections: number, peakConnections: number) {
+    return {
+        ...parsedMetrics,
+        idleCpuUsage: idleCpu,
+        peakCpuUsage: peakCpu,
+        idleMemoryUsage: idleMemory,
+        peakMemoryUsage: peakMemory,
+        idleConnectionCount: idleConnections,
+        peakConnectionCount: peakConnections
+    };
 }

@@ -31,4 +31,18 @@ public class BenchmarkController : ControllerBase
         var results = await _db.LoadMultipleQueriesRows();
         return Ok(results);
     }
+
+    [HttpGet("/database/single-write")]
+    public async Task<IActionResult> GetSingleWrite()
+    {
+        var world = await _db.SingleWriteRow();
+        return world != null ? Ok(world) : NotFound();
+    }
+
+    [HttpGet("/database/multiple-write")]
+    public async Task<IActionResult> GetMultipleWrite()
+    {
+        var results = await _db.MultipleWriteRows();
+        return Ok(results);
+    }
 }

@@ -5,23 +5,28 @@ competitors:
   #   database: postgres
   # - name: dotnet-minimal-apis
   #   database: postgres
-  - name: dotnet-minimal-apis-mssql
-    database: mssql
+  # - name: dotnet-minimal-apis-mssql
+  #   database: mssql
   # - name: dotnet-core
   #   database: postgres
   - name: dotnet-core-mssql
     database: mssql
 test:
   types:
-    - plaintext
-    - json
+    # - plaintext
+    # - json
     - database/single-read
     - database/multiple-read
+    - database/single-write
+    - database/multiple-write
   concurrency: 1 # Number of concurrent competitors tested (1 = sequentially)
   connections: 128 # total number of HTTP connections to keep open with each thread handling N = connections/threads
   threads: 4 # number of threads to use
-  duration: 1m # duration of the test for each type, e.g. 2s, 2m, 2h
-resources:
+  duration: 10s # duration of the test for each type, e.g. 2s, 2m, 2h
+  warmupDuration: 5s # duration of the warm-up test before the actual benchmark
+  idleWaitDuration: 5s # duration to wait after warmup before starting the actual test
+  databaseSettleDuration: 30s # duration to wait for database to settle after deployment
+resources: # Resources for the competitors
   replicas: 1
   requests:
     cpu: "1"
@@ -29,3 +34,10 @@ resources:
   limits:
     cpu: "1"
     memory: "512Mi"
+databaseResources: # Resources for the database
+  requests:
+    cpu: "8"
+    memory: "4Gi"
+  limits:
+    cpu: "8"
+    memory: "4Gi"
