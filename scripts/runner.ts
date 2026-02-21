@@ -119,7 +119,6 @@ async function main() {
         result: finalReport
     };
     fs.writeFileSync(reportPath, JSON.stringify(exportReport, null, 2));
-    console.log(exportReport);
 }
 
 main().catch(console.error);
