@@ -1,47 +1,25 @@
-using Microsoft.Data.SqlClient;
+using DotnetMinimalApisMssql;
 
 var builder = WebApplication.CreateBuilder(args);
-var app = builder.Build();
 
-string benchmarkConnectionString = "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;";
+string benchmarkConnectionString = "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Min Pool Size=100;Max Pool Size=100;";
+builder.Services.AddScoped(_ => new Db(benchmarkConnectionString));
+
+var app = builder.Build();
 
 app.MapGet("/plaintext", () => "Hello World!");
 
 app.MapGet("/json", () => new { message = "Hello World!" });
 
-app.MapGet("/database/single-read", async () =>
+app.MapGet("/database/single-read", async (Db db) =>
 {
-    int id = Random.Shared.Next(1, 10001);
-    using var connection = new SqlConnection(benchmarkConnectionString);
-    await connection.OpenAsync();
-    using var cmd = connection.CreateCommand();
-    cmd.CommandText = "SELECT id, randomNumber FROM World WHERE id = @id";
-    cmd.Parameters.AddWithValue("@id", id);
-    using var reader = await cmd.ExecuteReaderAsync();
-    if (await reader.ReadAsync())
-    {
-        return Results.Ok(new { id = reader.GetInt32(0), randomNumber = reader.GetInt32(1) });
-    }
-    return Results.NotFound();
+    var world = await db.LoadSingleQueryRow();
+    return world != null ? Results.Ok(world) : Results.NotFound();
 });
 
-app.MapGet("/database/multiple-read", async () =>
+app.MapGet("/database/multiple-read", async (Db db) =>
 {
-    int limit = 20;
-    int offset = Random.Shared.Next(0, 10001 - limit);
-    using var connection = new SqlConnection(benchmarkConnectionString);
-    await connection.OpenAsync();
-    using var cmd = connection.CreateCommand();
-    cmd.CommandText = "SELECT id, randomNumber FROM World ORDER BY id OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY";
-    cmd.Parameters.AddWithValue("@offset", offset);
-    cmd.Parameters.AddWithValue("@limit", limit);
-
-    var results = new List<object>();
-    using var reader = await cmd.ExecuteReaderAsync();
-    while (await reader.ReadAsync())
-    {
-        results.Add(new { id = reader.GetInt32(0), randomNumber = reader.GetInt32(1) });
-    }
+    var results = await db.LoadMultipleQueriesRows();
     return Results.Ok(results);
 });
 

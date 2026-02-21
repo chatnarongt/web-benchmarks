@@ -90,10 +90,10 @@ spec:
           mountPath: /docker-entrypoint-initdb.d
         resources:
           requests:
-            cpu: "2"
+            cpu: "4"
             memory: "8Gi"
           limits:
-            cpu: "2"
+            cpu: "4"
             memory: "8Gi"
       volumes:
       - name: init-script
@@ -201,10 +201,10 @@ spec:
           mountPath: /scripts
         resources:
           requests:
-            cpu: "2"
+            cpu: "4"
             memory: "8Gi"
           limits:
-            cpu: "2"
+            cpu: "4"
             memory: "8Gi"
       volumes:
       - name: scripts

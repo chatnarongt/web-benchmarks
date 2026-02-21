@@ -8,6 +8,8 @@ const sql = postgres({
   database: "benchmark",
   username: "postgres",
   password: "benchmark",
+  max: 100,
+  idle_timeout: 0,
 });
 
 new Elysia({ adapter: node() })

@@ -1,7 +1,11 @@
 import { Elysia } from "elysia";
 import { SQL } from "bun";
 
-const sql = new SQL("postgres://postgres:benchmark@postgres-service:5432/benchmark");
+const sql = new SQL({
+  url: "postgres://postgres:benchmark@postgres-service:5432/benchmark",
+  max: 100,
+  idleTimeout: 0,
+});
 
 new Elysia()
   .get("/plaintext", () => "Hello World!")
