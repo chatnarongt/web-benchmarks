@@ -113,12 +113,12 @@ async function main() {
                 const sanitizedTestType = testType.replace(/\//g, "-");
 
                 // --- WARMUP PHASE ---
-                console.log(`\n[${competitor}] 🔥 Warming up for '${testType}' (10s)...`);
+                console.log(`\n[${competitor}] 🔥 Warming up for '${testType}' (30s)...`);
                 try {
                     await $`kubectl run wrk-warmup-${competitor}-${sanitizedTestType} --rm -i \
                         --image=skandyla/wrk \
                         --restart=Never \
-                        -- -t ${config.test.threads} -c ${config.test.connections} -d 10s ${targetUrl}`.quiet();
+                        -- -t ${config.test.threads} -c ${config.test.connections} -d 30s ${targetUrl}`.quiet();
                 } catch (e) {
                     console.warn(`[${competitor}] ⚠️ Warmup failed (ignoring):`, e);
                 }

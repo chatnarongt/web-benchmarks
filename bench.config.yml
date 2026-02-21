@@ -3,6 +3,8 @@ competitors:
     database: postgres
   - name: node-with-elysia
     database: postgres
+  - name: dotnet-minimal-apis
+    database: postgres
   - name: dotnet-minimal-apis-mssql
     database: mssql
 test:
@@ -18,8 +20,8 @@ test:
 resources:
   replicas: 1
   requests:
-    cpu: "1"
-    memory: "1024Mi"
+    cpu: "2"
+    memory: "2048Mi"
   limits:
-    cpu: "1"
-    memory: "1024Mi"
+    cpu: "2"
+    memory: "2048Mi"
