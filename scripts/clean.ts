@@ -18,7 +18,7 @@ async function main() {
         // ignore errors if nothing to delete
     }
 
-    // 2. Parse configuration to get competitor names for 'hey' pods
+    // 2. Parse configuration to get competitor names for 'wrk' pods
     try {
         const fileContents = fs.readFileSync("bench.config.yml", "utf8");
         const config = yaml.load(fileContents) as BenchmarkConfig;

@@ -9,7 +9,7 @@ Ensure you have the following installed on your host machine:
 - **Kubernetes**: A local running cluster (e.g., Docker Desktop's built-in Kubernetes, Minikube, or kind).
 - **Bun**: The JavaScript runtime/toolkit used to run the orchestration script.
 - **kubectl**: CLI tool configured to communicate with your local Kubernetes cluster.
-- *(Note: You do NOT need `hey` or competitors' dependencies installed globally, as testing happens inside containers).*
+- *(Note: You do NOT need `wrk` or competitors' dependencies installed globally, as testing happens inside containers).*
 
 ## Configuration
 
@@ -17,17 +17,24 @@ The benchmarking pipeline is controlled by `bench.config.yml` at the root of the
 
 ```yaml
 competitors:
-  - elysia-js-with-bun
-  - elysia-js-with-node
-concurrency: 1 # Controls if competitors run sequentially (1) or concurrently
-test_time_in_minutes: 1 # Duration of each test. Recommended: 10
+  - bun-with-elysia
+  - node-with-elysia
+test:
+  types:
+    - plaintext
+    - json
+  concurrency: 1 # Number of concurrent competitors tested (1 = sequentially)
+  connections: 128 # total number of HTTP connections to keep open
+  threads: 4 # number of threads to use
+  duration: 1m # duration of the test, e.g. 2s, 2m, 2h
 resources:
+  replicas: 1
   requests:
-    cpu: "0.25"
-    memory: "64Mi"
+    cpu: "1"
+    memory: "1024Mi"
   limits:
-    cpu: "0.5"
-    memory: "512Mi"
+    cpu: "1"
+    memory: "1024Mi"
 ```
 
 To add a new framework to test, simply create a new directory inside `competitors/` containing the source and a valid `Dockerfile`, and then add its directory name to the `competitors` list.
@@ -44,10 +51,32 @@ This command will automatically:
 1. Parse `bench.config.yml`.
 2. Build the Docker image for the first competitor.
 3. Deploy it to Kubernetes with the requested resource limits.
-4. Launch a temporary `hey` pod to simulate heavy traffic against the deployment's service.
-5. Extract and parse the results.
+4. Launch a temporary `wrk` pod to simulate heavy traffic against the deployment's service.
+5. Extract and parse the results (Latency Avg/Max, Requests/Sec, etc.).
 6. Delete the deployment and move to the next competitor.
-7. Generate a final `report.json` with the consolidated metrics.
+7. Generate a consolidated report in the `reports/` directory.
+
+### Report Structure
+
+The generated reports include both the benchmark configuration and the results:
+
+```json
+{
+  "configs": { ... benchmark settings ... },
+  "result": {
+    "competitor-name": {
+      "plaintext": {
+        "totalRequests": 123456,
+        "requestsPerSecond": 1234.56,
+        "avgResponseTimeSecs": 0.012,
+        "maxResponseTimeSecs": 0.045,
+        "errorRatePercent": 0
+      },
+      "json": { ... }
+    }
+  }
+}
+```
 
 ### Cleaning Up
 

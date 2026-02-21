@@ -8,7 +8,7 @@ function parseTimeToSeconds(timeStr: string): number {
     return value; // already in seconds
 }
 
-export function parseHeyOutput(output: string) {
+export function parseWrkOutput(output: string) {
     const metrics: any = {
         totalRequests: 0,
         requestsPerSecond: 0,
@@ -37,7 +37,7 @@ export function parseHeyOutput(output: string) {
         }
 
         // 4. Latency Distribution
-        // wrk doesn't explicitly expose the absolute "Min" or "Fastest" like hey does.
+        // wrk doesn't explicitly expose the absolute "Min" or "Fastest".
 
         // 5. Error Rate
         let errors = 0;

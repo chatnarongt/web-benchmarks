@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as yaml from "js-yaml";
 import { $ } from "bun";
 import { generateK8sManifest } from "./manifests.ts";
-import { parseHeyOutput } from "./parser.ts";
+import { parseWrkOutput } from "./parser.ts";
 
 interface BenchmarkConfig {
     competitors: string[];
@@ -48,7 +48,7 @@ async function main() {
             console.log(`[${competitor}] ✅ Docker image built successfully.`);
 
             // 3 & 4. Generate and Apply Kubernetes Manifests
-            console.log(`[${competitor}] ☸️  Deploying to Kubernetes...`);
+            console.log(`\n[${competitor}] ☸️  Deploying to Kubernetes...`);
             const k8sManifest = generateK8sManifest(competitor, config.resources);
             const manifestPath = `/tmp/${competitor}-manifest.yml`;
             fs.writeFileSync(manifestPath, k8sManifest);
@@ -83,7 +83,7 @@ async function main() {
             -- -t ${config.test.threads} -c ${config.test.connections} -d ${config.test.duration} --latency ${targetUrl}`.text();
 
                 console.log(`[${competitor}] 📊 Load test '${testType}' complete. Parsing results...`);
-                const metrics = parseHeyOutput(testOutput);
+                const metrics = parseWrkOutput(testOutput);
                 finalReport[competitor][testType] = metrics;
                 console.log(`[${competitor}] 📈 Metrics (${testType}):`, metrics);
 
