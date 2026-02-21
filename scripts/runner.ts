@@ -38,43 +38,11 @@ async function main() {
 
     const finalReport: Record<string, any> = {};
 
-    // 2. Check required databases
-    const needsPostgres = config.competitors.some(c => c.database === "postgres");
-    const needsMssql = config.competitors.some(c => c.database === "mssql");
-
-    // 3. Deploy shared PostgreSQL database if needed
-    if (needsPostgres) {
-        console.log(`\n☸️  Deploying shared PostgreSQL database...`);
-        const pgManifest = generatePostgresManifest();
-        const pgManifestPath = `/tmp/postgres-manifest.yml`;
-        fs.writeFileSync(pgManifestPath, pgManifest);
-        await $`kubectl apply -f ${pgManifestPath}`;
-        console.log(`⏳ Waiting for PostgreSQL to be ready...`);
-        await $`kubectl rollout status deployment/postgres-deployment --timeout=120s`;
-        console.log(`✅ PostgreSQL ready.`);
-    }
-
-    // 4. Deploy shared MSSQL database if needed
-    if (needsMssql) {
-        console.log(`\n☸️  Deploying shared MSSQL database...`);
-        const mssqlManifest = generateMssqlManifest();
-        const mssqlManifestPath = `/tmp/mssql-manifest.yml`;
-        fs.writeFileSync(mssqlManifestPath, mssqlManifest);
-        await $`kubectl apply -f ${mssqlManifestPath}`;
-        console.log(`⏳ Waiting for MSSQL to be ready...`);
-        await $`kubectl rollout status deployment/mssql-deployment --timeout=300s`;
-        console.log(`✅ MSSQL ready.`);
-    }
-
-    // Wait for the databases to settle if any were deployed
-    if (needsPostgres || needsMssql) {
-        console.log(`⏳ Waiting for databases to settle...`);
-        await new Promise(resolve => setTimeout(resolve, 30000));
-    }
-
     // For now we assume sequential execution (concurrency = 1)
     for (const competitorConfig of config.competitors) {
         const competitor = competitorConfig.name;
+        const dbType = competitorConfig.database;
+
         console.log(`\n======================================================`);
         console.log(`[${competitor}] 🏁 Starting Benchmark`);
         console.log(`======================================================`);
@@ -82,12 +50,40 @@ async function main() {
         finalReport[competitor] = {};
 
         try {
-            // 2. Build Docker Image
+            // 2. Deploy required database for this competitor
+            if (dbType === "postgres") {
+                console.log(`[${competitor}] ☸️  Deploying PostgreSQL database...`);
+                const pgManifest = generatePostgresManifest();
+                const pgManifestPath = `/tmp/postgres-manifest.yml`;
+                fs.writeFileSync(pgManifestPath, pgManifest);
+                await $`kubectl apply -f ${pgManifestPath}`;
+                console.log(`[${competitor}] ⏳ Waiting for PostgreSQL to be ready...`);
+                await $`kubectl rollout status deployment/postgres-deployment --timeout=120s`;
+                console.log(`[${competitor}] ✅ PostgreSQL ready.`);
+            } else if (dbType === "mssql") {
+                console.log(`[${competitor}] ☸️  Deploying MSSQL database...`);
+                const mssqlManifest = generateMssqlManifest();
+                const mssqlManifestPath = `/tmp/mssql-manifest.yml`;
+                fs.writeFileSync(mssqlManifestPath, mssqlManifest);
+                await $`kubectl apply -f ${mssqlManifestPath}`;
+                console.log(`[${competitor}] ⏳ Waiting for MSSQL to be ready...`);
+                await $`kubectl rollout status deployment/mssql-deployment --timeout=300s`;
+                console.log(`[${competitor}] ✅ MSSQL ready.`);
+            }
+
+            // Wait for the database to settle if one was deployed
+            if (dbType) {
+                const settleTime = dbType === "mssql" ? 30000 : 15000;
+                console.log(`[${competitor}] ⏳ Waiting ${settleTime / 1000}s for database to settle...`);
+                await new Promise(resolve => setTimeout(resolve, settleTime));
+            }
+
+            // 3. Build Docker Image
             console.log(`[${competitor}] 🐳 Building Docker image...`);
             await $`docker build -t ${competitor}:benchmark ./competitors/${competitor}`;
             console.log(`[${competitor}] ✅ Docker image built successfully.`);
 
-            // 3 & 4. Generate and Apply Kubernetes Manifests
+            // 4 & 5. Generate and Apply Kubernetes Manifests
             console.log(`\n[${competitor}] ☸️  Deploying to Kubernetes...`);
             const k8sManifest = generateK8sManifest(competitor, config.resources);
             const manifestPath = `/tmp/${competitor}-manifest.yml`;
@@ -105,8 +101,6 @@ async function main() {
 
             // Iterate through every test type requested in bench.config.yml
             for (const testType of config.test.types) {
-                console.log(`\n[${competitor}] 🧨 Running load test '${testType}' with 'wrk' for ${config.test.duration}...`);
-
                 let endpoint = '/plaintext';
                 if (testType === 'json') {
                     endpoint = '/json';
@@ -116,12 +110,25 @@ async function main() {
                     endpoint = '/database/multiple-read';
                 }
                 const targetUrl = `http://${competitor}-service${endpoint}`;
+                const sanitizedTestType = testType.replace(/\//g, "-");
+
+                // --- WARMUP PHASE ---
+                console.log(`\n[${competitor}] 🔥 Warming up for '${testType}' (10s)...`);
+                try {
+                    await $`kubectl run wrk-warmup-${competitor}-${sanitizedTestType} --rm -i \
+                        --image=skandyla/wrk \
+                        --restart=Never \
+                        -- -t ${config.test.threads} -c ${config.test.connections} -d 10s ${targetUrl}`.quiet();
+                } catch (e) {
+                    console.warn(`[${competitor}] ⚠️ Warmup failed (ignoring):`, e);
+                }
+
+                // --- ACTUAL TEST PHASE ---
+                console.log(`[${competitor}] 🧨 Running load test '${testType}' with 'wrk' for ${config.test.duration}...`);
 
                 // Run wrk and capture output. We run it as a Job or a standalone Pod.
                 const wrkCommand = `wrk -t ${config.test.threads} -c ${config.test.connections} -d ${config.test.duration} --latency ${targetUrl}`;
                 console.log(`[${competitor}] Executing: ${wrkCommand} from inside cluster...`);
-
-                const sanitizedTestType = testType.replace(/\//g, "-");
 
                 // Ensure any leftover pod is deleted
                 await $`kubectl delete pod wrk-test-${competitor}-${sanitizedTestType} --ignore-not-found`.quiet();
@@ -144,35 +151,29 @@ async function main() {
             console.error(`[${competitor}] ❌ Benchmark failed:`, error);
             finalReport[competitor] = { error: String(error) };
         } finally {
-            // 6. Cleanup
-            console.log(`[${competitor}] 🧹 Cleaning up deployment...`);
+            // 6. Cleanup competitor and database
+            console.log(`[${competitor}] 🧹 Cleaning up resources...`);
             try {
+                // Cleanup competitor
                 await $`kubectl delete deployment ${competitor}-deployment --ignore-not-found`;
                 await $`kubectl delete service ${competitor}-service --ignore-not-found`;
+
+                // Cleanup database
+                if (dbType === "postgres") {
+                    await $`kubectl delete deployment postgres-deployment --ignore-not-found`;
+                    await $`kubectl delete service postgres-service --ignore-not-found`;
+                    await $`kubectl delete configmap postgres-init-script --ignore-not-found`;
+                    await $`rm -f /tmp/postgres-manifest.yml`;
+                } else if (dbType === "mssql") {
+                    await $`kubectl delete deployment mssql-deployment --ignore-not-found`;
+                    await $`kubectl delete service mssql-service --ignore-not-found`;
+                    await $`kubectl delete configmap mssql-init-script --ignore-not-found`;
+                    await $`rm -f /tmp/mssql-manifest.yml`;
+                }
             } catch (e) {
                 console.error(`[${competitor}] Cleanup error:`, e);
             }
         }
-    }
-
-    // 7. Cleanup shared resources
-    console.log(`\n🧹 Cleaning up shared databases...`);
-    try {
-        if (needsPostgres) {
-            await $`kubectl delete deployment postgres-deployment --ignore-not-found`;
-            await $`kubectl delete service postgres-service --ignore-not-found`;
-            await $`kubectl delete configmap postgres-init-script --ignore-not-found`;
-            await $`rm -f /tmp/postgres-manifest.yml`;
-        }
-
-        if (needsMssql) {
-            await $`kubectl delete deployment mssql-deployment --ignore-not-found`;
-            await $`kubectl delete service mssql-service --ignore-not-found`;
-            await $`kubectl delete configmap mssql-init-script --ignore-not-found`;
-            await $`rm -f /tmp/mssql-manifest.yml`;
-        }
-    } catch (e) {
-        console.error(`Cleanup error (Databases):`, e);
     }
 
     // 7. Output Report
