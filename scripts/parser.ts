@@ -13,7 +13,6 @@ export function parseHeyOutput(output: string) {
         totalRequests: 0,
         requestsPerSecond: 0,
         avgResponseTimeSecs: 0,
-        minResponseTimeSecs: 0,
         maxResponseTimeSecs: 0,
         errorRatePercent: 0,
     };
@@ -37,10 +36,8 @@ export function parseHeyOutput(output: string) {
             metrics.maxResponseTimeSecs = parseTimeToSeconds(latencyMatch[2]);
         }
 
-        // 4. Min Latency / Latency Distribution
+        // 4. Latency Distribution
         // wrk doesn't explicitly expose the absolute "Min" or "Fastest" like hey does.
-        // We will default to 0.
-        metrics.minResponseTimeSecs = 0;
 
         // 5. Error Rate
         let errors = 0;

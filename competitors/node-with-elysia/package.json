@@ -1,5 +1,5 @@
 {
-  "name": "elysia-js-with-node",
+  "name": "node-with-elysia",
   "version": "1.0.0",
   "scripts": {
     "dev": "tsx watch src/index.ts",

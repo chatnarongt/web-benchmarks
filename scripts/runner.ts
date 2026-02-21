@@ -114,8 +114,12 @@ async function main() {
     }
     const reportPath = `${reportDir}/${startTime}.json`;
     console.log(`🎉 All benchmarks complete. Writing ${reportPath}`);
-    fs.writeFileSync(reportPath, JSON.stringify(finalReport, null, 2));
-    console.log(finalReport);
+    const exportReport = {
+        configs: config,
+        result: finalReport
+    };
+    fs.writeFileSync(reportPath, JSON.stringify(exportReport, null, 2));
+    console.log(exportReport);
 }
 
 main().catch(console.error);
