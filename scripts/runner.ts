@@ -2,11 +2,16 @@
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import { $ } from "bun";
-import { generateK8sManifest, generatePostgresManifest } from "./manifests.ts";
+import { generateK8sManifest, generatePostgresManifest, generateMssqlManifest } from "./manifests.ts";
 import { parseWrkOutput } from "./parser.ts";
 
+interface CompetitorConfig {
+    name: string;
+    database?: "postgres" | "mssql";
+}
+
 interface BenchmarkConfig {
-    competitors: string[];
+    competitors: CompetitorConfig[];
     test: {
         types: string[];
         concurrency: number;
@@ -33,21 +38,43 @@ async function main() {
 
     const finalReport: Record<string, any> = {};
 
-    // 2. Deploy shared PostgreSQL database
-    console.log(`\n☸️  Deploying shared PostgreSQL database...`);
-    const pgManifest = generatePostgresManifest();
-    const pgManifestPath = `/tmp/postgres-manifest.yml`;
-    fs.writeFileSync(pgManifestPath, pgManifest);
-    await $`kubectl apply -f ${pgManifestPath}`;
-    console.log(`⏳ Waiting for PostgreSQL to be ready...`);
-    await $`kubectl rollout status deployment/postgres-deployment --timeout=120s`;
-    console.log(`✅ PostgreSQL ready.`);
+    // 2. Check required databases
+    const needsPostgres = config.competitors.some(c => c.database === "postgres");
+    const needsMssql = config.competitors.some(c => c.database === "mssql");
 
-    // Wait for the init script to finish executing
-    await new Promise(resolve => setTimeout(resolve, 10000));
+    // 3. Deploy shared PostgreSQL database if needed
+    if (needsPostgres) {
+        console.log(`\n☸️  Deploying shared PostgreSQL database...`);
+        const pgManifest = generatePostgresManifest();
+        const pgManifestPath = `/tmp/postgres-manifest.yml`;
+        fs.writeFileSync(pgManifestPath, pgManifest);
+        await $`kubectl apply -f ${pgManifestPath}`;
+        console.log(`⏳ Waiting for PostgreSQL to be ready...`);
+        await $`kubectl rollout status deployment/postgres-deployment --timeout=120s`;
+        console.log(`✅ PostgreSQL ready.`);
+    }
+
+    // 4. Deploy shared MSSQL database if needed
+    if (needsMssql) {
+        console.log(`\n☸️  Deploying shared MSSQL database...`);
+        const mssqlManifest = generateMssqlManifest();
+        const mssqlManifestPath = `/tmp/mssql-manifest.yml`;
+        fs.writeFileSync(mssqlManifestPath, mssqlManifest);
+        await $`kubectl apply -f ${mssqlManifestPath}`;
+        console.log(`⏳ Waiting for MSSQL to be ready...`);
+        await $`kubectl rollout status deployment/mssql-deployment --timeout=300s`;
+        console.log(`✅ MSSQL ready.`);
+    }
+
+    // Wait for the databases to settle if any were deployed
+    if (needsPostgres || needsMssql) {
+        console.log(`⏳ Waiting for databases to settle...`);
+        await new Promise(resolve => setTimeout(resolve, 30000));
+    }
 
     // For now we assume sequential execution (concurrency = 1)
-    for (const competitor of config.competitors) {
+    for (const competitorConfig of config.competitors) {
+        const competitor = competitorConfig.name;
         console.log(`\n======================================================`);
         console.log(`[${competitor}] 🏁 Starting Benchmark`);
         console.log(`======================================================`);
@@ -70,7 +97,7 @@ async function main() {
             console.log(`[${competitor}] ⏳ Waiting for deployment to be ready...`);
 
             // Wait for rollout
-            await $`kubectl rollout status deployment/${competitor}-deployment --timeout=120s`;
+            await $`kubectl rollout status deployment/${competitor}-deployment --timeout=300s`;
             console.log(`[${competitor}] ✅ Deployment ready.`);
 
             // Wait a few seconds for load balancer/service routing to settle
@@ -129,14 +156,23 @@ async function main() {
     }
 
     // 7. Cleanup shared resources
-    console.log(`\n🧹 Cleaning up shared PostgreSQL...`);
+    console.log(`\n🧹 Cleaning up shared databases...`);
     try {
-        await $`kubectl delete deployment postgres-deployment --ignore-not-found`;
-        await $`kubectl delete service postgres-service --ignore-not-found`;
-        await $`kubectl delete configmap postgres-init-script --ignore-not-found`;
-        await $`rm -f /tmp/postgres-manifest.yml`;
+        if (needsPostgres) {
+            await $`kubectl delete deployment postgres-deployment --ignore-not-found`;
+            await $`kubectl delete service postgres-service --ignore-not-found`;
+            await $`kubectl delete configmap postgres-init-script --ignore-not-found`;
+            await $`rm -f /tmp/postgres-manifest.yml`;
+        }
+
+        if (needsMssql) {
+            await $`kubectl delete deployment mssql-deployment --ignore-not-found`;
+            await $`kubectl delete service mssql-service --ignore-not-found`;
+            await $`kubectl delete configmap mssql-init-script --ignore-not-found`;
+            await $`rm -f /tmp/mssql-manifest.yml`;
+        }
     } catch (e) {
-        console.error(`Cleanup error (Postgres):`, e);
+        console.error(`Cleanup error (Databases):`, e);
     }
 
     // 7. Output Report

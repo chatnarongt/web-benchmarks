@@ -1,6 +1,10 @@
 competitors:
-  - bun-with-elysia
-  - node-with-elysia
+  - name: bun-with-elysia
+    database: postgres
+  - name: node-with-elysia
+    database: postgres
+  - name: dotnet-minimal-apis-mssql
+    database: mssql
 test:
   types:
     - plaintext
@@ -10,7 +14,7 @@ test:
   concurrency: 1 # Number of concurrent competitors tested (1 = sequentially)
   connections: 128 # total number of HTTP connections to keep open with each thread handling N = connections/threads
   threads: 4 # number of threads to use
-  duration: 1m # duration of the test, e.g. 2s, 2m, 2h
+  duration: 1m # duration of the test for each type, e.g. 2s, 2m, 2h
 resources:
   replicas: 1
   requests:

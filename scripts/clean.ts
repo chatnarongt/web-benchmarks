@@ -3,8 +3,12 @@ import * as fs from "fs";
 import * as yaml from "js-yaml";
 import { $ } from "bun";
 
+interface CompetitorConfig {
+    name: string;
+}
+
 interface BenchmarkConfig {
-    competitors: string[];
+    competitors: CompetitorConfig[];
 }
 
 async function main() {
@@ -24,7 +28,8 @@ async function main() {
         const config = yaml.load(fileContents) as BenchmarkConfig;
 
         // Delete wrk-test pods for each competitor
-        for (const competitor of config.competitors) {
+        for (const competitorConfig of config.competitors) {
+            const competitor = competitorConfig.name;
             try {
                 await $`kubectl delete pods -l run=wrk-test-${competitor}-plaintext --ignore-not-found`.quiet();
                 await $`kubectl delete pods -l run=wrk-test-${competitor}-json --ignore-not-found`.quiet();
@@ -49,6 +54,16 @@ async function main() {
         await $`kubectl delete service postgres-service --ignore-not-found`.quiet();
         await $`kubectl delete configmap postgres-init-script --ignore-not-found`.quiet();
         await $`rm -f /tmp/postgres-manifest.yml`.quiet();
+    } catch (e) {
+        // ignore
+    }
+
+    // 5. Cleanup MSSQL resources
+    try {
+        await $`kubectl delete deployment mssql-deployment --ignore-not-found`.quiet();
+        await $`kubectl delete service mssql-service --ignore-not-found`.quiet();
+        await $`kubectl delete configmap mssql-init-script --ignore-not-found`.quiet();
+        await $`rm -f /tmp/mssql-manifest.yml`.quiet();
     } catch (e) {
         // ignore
     }
