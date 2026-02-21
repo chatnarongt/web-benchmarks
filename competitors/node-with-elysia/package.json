@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "@elysiajs/node": "^1.4.5",
-    "elysia": "^1.4.25"
+    "elysia": "^1.4.25",
+    "postgres": "^3.4.8"
   },
   "devDependencies": {
     "@types/node": "^25.3.0",

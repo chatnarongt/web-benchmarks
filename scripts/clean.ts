@@ -43,6 +43,16 @@ async function main() {
         // ignore
     }
 
+    // 4. Cleanup PostgreSQL resources
+    try {
+        await $`kubectl delete deployment postgres-deployment --ignore-not-found`.quiet();
+        await $`kubectl delete service postgres-service --ignore-not-found`.quiet();
+        await $`kubectl delete configmap postgres-init-script --ignore-not-found`.quiet();
+        await $`rm -f /tmp/postgres-manifest.yml`.quiet();
+    } catch (e) {
+        // ignore
+    }
+
     console.log("✅ Clean complete.");
 }
 
