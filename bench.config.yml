@@ -55,9 +55,9 @@ test:
     - database/multiple-write
   concurrency: 2 # Number of concurrent competitors tested (1 = sequentially)
   vus: 128 # total number of virtual users to use for the test
-  duration: 1m # Default: 5m, duration of the test for each type, e.g. 2s, 2m, 2h
-  warmupDuration: 15s # Default: 15s, duration of the warm-up test before the actual benchmark
-  idleWaitDuration: 20s # Default: 20s, duration to wait after warmup before starting the actual test
+  duration: 5m # Default: 5m, duration of the test for each type, e.g. 2s, 2m, 2h
+  warmupDuration: 30s # Default: 30s, duration of the warm-up test before the actual benchmark
+  idleWaitDuration: 30s # Default: 30s, duration to wait after warmup before starting the actual test
   databaseSettleDuration: 30s # Default: 30s, duration to wait for database to settle after deployment
   logMode: "summary" # "verbose", "summary" or "silent"
 
@@ -72,8 +72,8 @@ resources: # Resources for the competitors
 
 databaseResources: # Resources for the database
   requests:
-    cpu: "4"
+    cpu: "5"
     memory: "4Gi"
   limits:
-    cpu: "4"
+    cpu: "5"
     memory: "4Gi"

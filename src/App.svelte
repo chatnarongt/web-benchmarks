@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { Card, Select, Button, Fileupload, Spinner, Table, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell, Label, Dropdown, Toggle, MultiSelect } from 'flowbite-svelte';
+  import { Card, Select, Button, Fileupload, Spinner, Table, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell, Label, Dropdown, Toggle, MultiSelect, Tooltip } from 'flowbite-svelte';
   import BarChart from './lib/BarChart.svelte';
 
   // Dynamic import of all reports using Vite's glob import
@@ -85,19 +85,27 @@
     { id: 'errors', key: 'errorCount', label: 'Errors', isResource: true,
       pct: (r: any) => `${(r.errorPercent || 0).toFixed(2)}%`, val: (r: any) => `${r.errorCount || 0}`
     },
-    { id: 'appCpu', key: 'cpuUsagePeakPercent', label: 'App CPU', isResource: true,
-      pct: (r: any) => `${(r.cpuUsagePeakPercent || 0).toFixed(2)}%`, val: (r: any) => `${r.cpuUsagePeak || 0}m`
+    { id: 'appCpu', key: 'cpuUsagePeakPercent', label: 'App CPU (Idl/Max)', isComboResource: true,
+      idleKey: 'cpuUsageIdlePercent', peakKey: 'cpuUsagePeakPercent',
+      idlePctOut: (r: any) => `${(r.cpuUsageIdlePercent || 0).toFixed(1)}`, peakPctOut: (r: any) => `${(r.cpuUsagePeakPercent || 0).toFixed(1)}%`,
+      idleValOut: (r: any) => `${r.cpuUsageIdle || 0}`, peakValOut: (r: any) => `${r.cpuUsagePeak || 0}m`
     },
-    { id: 'appRam', key: 'memUsagePeakPercent', label: 'App RAM', isResource: true,
-      pct: (r: any) => `${(r.memUsagePeakPercent || 0).toFixed(2)}%`, val: (r: any) => `${r.memUsagePeak || 0}MB`
+    { id: 'appRam', key: 'memUsagePeakPercent', label: 'App RAM (Idl/Max)', isComboResource: true,
+      idleKey: 'memUsageIdlePercent', peakKey: 'memUsagePeakPercent',
+      idlePctOut: (r: any) => `${(r.memUsageIdlePercent || 0).toFixed(1)}`, peakPctOut: (r: any) => `${(r.memUsagePeakPercent || 0).toFixed(1)}%`,
+      idleValOut: (r: any) => `${r.memUsageIdle || 0}`, peakValOut: (r: any) => `${r.memUsagePeak || 0}MB`
     },
-    { id: 'dbCpu', key: 'dbCpuUsagePeakPercent', label: 'DB CPU', isResource: true,
-      pct: (r: any) => `${(r.dbCpuUsagePeakPercent || 0).toFixed(2)}%`, val: (r: any) => `${r.dbCpuUsagePeak || 0}m`
+    { id: 'dbCpu', key: 'dbCpuUsagePeakPercent', label: 'DB CPU (Idl/Max)', isComboResource: true,
+      idleKey: 'dbCpuUsageIdlePercent', peakKey: 'dbCpuUsagePeakPercent',
+      idlePctOut: (r: any) => `${(r.dbCpuUsageIdlePercent || 0).toFixed(1)}`, peakPctOut: (r: any) => `${(r.dbCpuUsagePeakPercent || 0).toFixed(1)}%`,
+      idleValOut: (r: any) => `${r.dbCpuUsageIdle || 0}`, peakValOut: (r: any) => `${r.dbCpuUsagePeak || 0}m`
     },
-    { id: 'dbRam', key: 'dbMemUsagePeakPercent', label: 'DB RAM', isResource: true,
-      pct: (r: any) => `${(r.dbMemUsagePeakPercent || 0).toFixed(2)}%`, val: (r: any) => `${r.dbMemUsagePeak || 0}MB`
+    { id: 'dbRam', key: 'dbMemUsagePeakPercent', label: 'DB RAM (Idl/Max)', isComboResource: true,
+      idleKey: 'dbMemUsageIdlePercent', peakKey: 'dbMemUsagePeakPercent',
+      idlePctOut: (r: any) => `${(r.dbMemUsageIdlePercent || 0).toFixed(1)}`, peakPctOut: (r: any) => `${(r.dbMemUsagePeakPercent || 0).toFixed(1)}%`,
+      idleValOut: (r: any) => `${r.dbMemUsageIdle || 0}`, peakValOut: (r: any) => `${r.dbMemUsagePeak || 0}MB`
     },
-    { id: 'dbConns', key: 'dbConnectionCountPeak', label: 'Max DB Conns', format: (v: number) => (v || 0) }
+    { id: 'dbConns', key: 'dbConnectionCountPeak', label: 'DB Conns (Idl/Max)', format: (v: number, r: any) => `${r.dbConnectionCountIdle || 0} / ${v || 0}` }
   ];
 
   function initCols(types: string[]) {
@@ -487,11 +495,18 @@
                           </TableBodyCell>
                           {#each tableMetrics as metric}
                             <TableBodyCell>
-                              {#if metric.isResource}
-                                <div class="flex items-center gap-2">
-                                  <span class="font-medium {getPctClass(row[metric.key])}">{metric.pct(row)}</span>
-                                  <span class="text-gray-500 dark:text-gray-400 text-xs">{metric.val(row)}</span>
+                              {#if metric.isComboResource}
+                                <div class="inline-flex w-max items-center gap-1.5 whitespace-nowrap cursor-help relative">
+                                  <span class="font-medium {getPctClass(row[metric.idleKey])}">{metric.idlePctOut(row)}</span>
+                                  <span class="text-gray-500 font-medium text-xs">&nbsp;/&nbsp;</span>
+                                  <span class="font-medium {getPctClass(row[metric.peakKey])}">{metric.peakPctOut(row)}</span>
                                 </div>
+                                <Tooltip placement="top">{metric.idleValOut(row)} / {metric.peakValOut(row)}</Tooltip>
+                              {:else if metric.isResource}
+                                <div class="inline-flex w-max items-center gap-2 cursor-help relative">
+                                  <span class="font-medium {getPctClass(row[metric.key])}">{metric.pct(row)}</span>
+                                </div>
+                                <Tooltip placement="top">{metric.val(row)}</Tooltip>
                               {:else}
                                 {@const val = row[metric.key]}
                                 {val !== undefined ? (metric.format ? metric.format(val, row) : val) : 'N/A'}
