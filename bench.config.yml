@@ -47,7 +47,7 @@ competitors:
       DATABASE_URL: postgres://postgres:benchmark@postgres-service:5432/benchmark?sslmode=disable
       MAX_DB_CONNECTIONS: 50
 
-test:
+test: # With all default settings 1 test will take about 7 minutes, 1 competitor will take about 42 minutes
   types:
     - plaintext
     - json
@@ -55,7 +55,7 @@ test:
     - database/multiple-read
     - database/single-write
     - database/multiple-write
-  concurrency: 2 # Number of concurrent competitors tested (1 = sequentially)
+  concurrency: 1 # Number of concurrent competitors tested (1 = sequentially)
   vus: 128 # total number of virtual users to use for the test
   duration: 5m # Default: 5m, duration of the test for each type, e.g. 2s, 2m, 2h
   warmupDuration: 30s # Default: 30s, duration of the warm-up test before the actual benchmark
@@ -66,16 +66,16 @@ test:
 resources: # Resources for the competitors
   replicas: 1
   requests:
-    cpu: "0.5"
+    cpu: "1"
     memory: "512Mi"
   limits:
-    cpu: "0.5"
+    cpu: "1"
     memory: "512Mi"
 
 databaseResources: # Resources for the database
   requests:
-    cpu: "4"
+    cpu: "6"
     memory: "4Gi"
   limits:
-    cpu: "4"
+    cpu: "6"
     memory: "4Gi"
