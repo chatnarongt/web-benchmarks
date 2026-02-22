@@ -6,10 +6,10 @@ An automated pipeline for benchmarking web framework competitors (currently Elys
 
 Ensure you have the following installed on your host machine:
 - **Docker**: For building and running containerized environments (Docker Desktop is recommended for macOS/Windows).
-- **Kubernetes**: A local running cluster (e.g., Docker Desktop's built-in Kubernetes, Minikube, or kind).
+- **Kubernetes**: A local running cluster (e.g., Docker Desktop's built-in Kubernetes, Minikube, or kind) ideally with `metrics-server` installed.
 - **Bun**: The JavaScript runtime/toolkit used to run the orchestration script.
 - **kubectl**: CLI tool configured to communicate with your local Kubernetes cluster.
-- *(Note: You do NOT need `wrk` or competitors' dependencies installed globally, as testing happens inside containers).*
+- *(Note: You do NOT need `k6` or competitors' dependencies installed globally, as testing happens inside containers).*
 
 ## Configuration
 
@@ -17,24 +17,43 @@ The benchmarking pipeline is controlled by `bench.config.yml` at the root of the
 
 ```yaml
 competitors:
-  - bun-with-elysia
-  - node-with-elysia
+  - name: bun-with-elysia
+    database: postgres
+    env:
+      MAX_DB_CONNECTIONS: 100
+  - name: node-with-elysia
+    database: postgres
+    env:
+      MAX_DB_CONNECTIONS: 100
 test:
   types:
     - plaintext
     - json
+    - database/single-read
+    - database/multiple-read
+    - database/single-write
+    - database/multiple-write
   concurrency: 1 # Number of concurrent competitors tested (1 = sequentially)
-  connections: 128 # total number of HTTP connections to keep open
-  threads: 4 # number of threads to use
-  duration: 1m # duration of the test, e.g. 2s, 2m, 2h
-resources:
+  vus: 128 # total number of virtual users to simulate concurrently in k6
+  duration: 1m # duration of the test for each type, e.g. 2s, 2m, 2h
+  warmupDuration: 15s # duration of the warm-up test before the actual benchmark
+  idleWaitDuration: 15s # duration to wait after warmup before starting the actual test
+  databaseSettleDuration: 30s # duration to wait for database to settle after deployment
+resources: # Resources for the competitors
   replicas: 1
   requests:
     cpu: "1"
-    memory: "1024Mi"
+    memory: "512Mi"
   limits:
     cpu: "1"
-    memory: "1024Mi"
+    memory: "512Mi"
+databaseResources: # Resources for the database
+  requests:
+    cpu: "8"
+    memory: "4Gi"
+  limits:
+    cpu: "8"
+    memory: "4Gi"
 ```
 
 To add a new framework to test, simply create a new directory inside `competitors/` containing the source and a valid `Dockerfile`, and then add its directory name to the `competitors` list.
@@ -44,17 +63,18 @@ To add a new framework to test, simply create a new directory inside `competitor
 Start the automated benchmarking process by simply running:
 
 ```bash
-bun run start
+bun start:bench
 ```
 
 This command will automatically:
 1. Parse `bench.config.yml`.
 2. Build the Docker image for the first competitor.
 3. Deploy it to Kubernetes with the requested resource limits.
-4. Launch a temporary `wrk` pod to simulate heavy traffic against the deployment's service.
-5. Extract and parse the results (Latency Avg/Max, Requests/Sec, etc.).
-6. Delete the deployment and move to the next competitor.
-7. Generate a consolidated report in the `reports/` directory.
+4. Launch a temporary `grafana/k6` container pod to warm up and run heavy traffic tests against the deployment's endpoints.
+5. Continuously extract CPU, Memory, and Database Connection counts (`idle` and `peak`).
+6. Parse k6 JSON output to collect total requests, latency, requests/sec, and error rates.
+7. Delete the deployment, isolated databases, and move to the next competitor.
+8. Generate a consolidated report in the `reports/` directory.
 
 ### Report Structure
 
@@ -68,9 +88,28 @@ The generated reports include both the benchmark configuration and the results:
       "plaintext": {
         "totalRequests": 123456,
         "requestsPerSecond": 1234.56,
-        "avgResponseTimeSecs": 0.012,
-        "maxResponseTimeSecs": 0.045,
-        "errorRatePercent": 0
+        "latencyAverageMs": 3.5,
+        "latencyMaxMs": 52.2,
+        "errorCount": 0,
+        "errorPercent": 0,
+        "cpuUsageIdle": 267,
+        "cpuUsageIdlePercent": 26.7,
+        "cpuUsagePeak": 469,
+        "cpuUsagePeakPercent": 46.9,
+        "memUsageIdle": 22,
+        "memUsageIdlePercent": 4.3,
+        "memUsagePeak": 22,
+        "memUsagePeakPercent": 4.3,
+        "dbConnectionCountIdle": 0,
+        "dbConnectionCountPeak": 0,
+        "dbCpuUsageIdle": 14,
+        "dbCpuUsageIdlePercent": 0.7,
+        "dbCpuUsagePeak": 35,
+        "dbCpuUsagePeakPercent": 1.75,
+        "dbMemUsageIdle": 150,
+        "dbMemUsageIdlePercent": 3.6,
+        "dbMemUsagePeak": 155,
+        "dbMemUsagePeakPercent": 3.7
       },
       "json": { ... }
     }
@@ -83,7 +122,21 @@ The generated reports include both the benchmark configuration and the results:
 If a test fails mid-run or you want to abruptly abort, you might be left with orphaned Kubernetes resources. Run:
 
 ```bash
-bun run clean
+bun clean:bench
 ```
 
 This will clear all deployments, services, and temporary files generated by the runner.
+
+### Web Benchmarks Viewer
+
+We provide a custom Svelte 5 dashboard to dynamically visualize benchmark JSON results, view charts, config summaries, and data tables.
+
+To run the local viewer:
+```bash
+bun run dev
+```
+
+If you prefer building and serving a static preview server:
+```bash
+bun start:viewer
+```

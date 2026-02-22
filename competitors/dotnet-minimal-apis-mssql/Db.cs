@@ -15,18 +15,16 @@ public class Db
         _connectionString = connectionString;
     }
 
-    public async Task<object?> LoadSingleQueryRow()
+    public async Task<object?> LoadSingleQueryRow(int id)
     {
         using var db = _dbProviderFactory.CreateConnection();
         db!.ConnectionString = _connectionString;
         return await db.QuerySingleOrDefaultAsync<object>(
-            "SELECT id, randomNumber FROM World WHERE id = @id", new { id = Random.Shared.Next(1, 10001) });
+            "SELECT id, randomNumber FROM World WHERE id = @id", new { id });
     }
 
-    public async Task<IEnumerable<object>> LoadMultipleQueriesRows()
+    public async Task<IEnumerable<object>> LoadMultipleQueriesRows(int limit, int offset)
     {
-        int limit = 20;
-        int offset = Random.Shared.Next(0, 10001 - limit);
         using var db = _dbProviderFactory.CreateConnection();
         db!.ConnectionString = _connectionString;
         return await db.QueryAsync<object>(
@@ -34,30 +32,27 @@ public class Db
             new { offset, limit });
     }
 
-    public async Task<World?> SingleWriteRow()
+    public async Task<World?> SingleWriteRow(int id, int randomNumber)
     {
         using var db = _dbProviderFactory.CreateConnection();
         db!.ConnectionString = _connectionString;
 
         var world = await db.QuerySingleOrDefaultAsync<World>(
-            "SELECT id, randomNumber FROM World WHERE id = @id", new { id = Random.Shared.Next(1, 10001) });
+            "SELECT id, randomNumber FROM World WHERE id = @id", new { id });
 
         if (world != null)
         {
-            var newRandomNumber = Random.Shared.Next(1, 10001);
             await db.ExecuteAsync(
                 "UPDATE World SET randomNumber = @randomNumber WHERE id = @id",
-                new { randomNumber = newRandomNumber, id = world.Id });
-            return world with { RandomNumber = newRandomNumber };
+                new { randomNumber, id = world.Id });
+            return world with { RandomNumber = randomNumber };
         }
 
         return null;
     }
 
-    public async Task<IEnumerable<World>> MultipleWriteRows()
+    public async Task<IEnumerable<World>> MultipleWriteRows(int limit, int offset, int[] rns)
     {
-        int limit = 20;
-        int offset = Random.Shared.Next(0, 10001 - limit);
         using var db = _dbProviderFactory.CreateConnection();
         db!.ConnectionString = _connectionString;
 
@@ -71,7 +66,7 @@ public class Db
 
         for (int i = 0; i < worlds.Count; i++)
         {
-            var newRandomNumber = Random.Shared.Next(1, 10001);
+            var newRandomNumber = i < rns.Length ? rns[i] : 1;
             worlds[i] = worlds[i] with { RandomNumber = newRandomNumber };
 
             sql.Append($"({worlds[i].Id}, {newRandomNumber})");

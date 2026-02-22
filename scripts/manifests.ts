@@ -1,5 +1,13 @@
 /// <reference types="bun-types" />
-export function generateK8sManifest(name: string, resources: any): string {
+export function generateK8sManifest(name: string, resources: any, envVars?: Record<string, string>): string {
+  let envString = "";
+  if (envVars && Object.keys(envVars).length > 0) {
+    envString = "\n        env:";
+    for (const [key, value] of Object.entries(envVars)) {
+      envString += `\n        - name: ${key}\n          value: "${value}"`;
+    }
+  }
+
   return `
 ---
 apiVersion: apps/v1
@@ -21,7 +29,7 @@ spec:
       containers:
       - name: ${name}
         image: ${name}:benchmark
-        imagePullPolicy: Never # Use local image built by step 2
+        imagePullPolicy: Never # Use local image built by step 2${envString}
         ports:
         - containerPort: 3000
         resources:

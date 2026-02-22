@@ -11,27 +11,28 @@ app.MapGet("/plaintext", () => "Hello World!");
 
 app.MapGet("/json", () => new { message = "Hello World!" });
 
-app.MapGet("/database/single-read", async (Db db) =>
+app.MapGet("/database/single-read", async (Db db, int? id) =>
 {
-    var world = await db.LoadSingleQueryRow();
+    var world = await db.LoadSingleQueryRow(id ?? 1);
     return world != null ? Results.Ok(world) : Results.NotFound();
 });
 
-app.MapGet("/database/multiple-read", async (Db db) =>
+app.MapGet("/database/multiple-read", async (Db db, int? limit, int? offset) =>
 {
-    var results = await db.LoadMultipleQueriesRows();
+    var results = await db.LoadMultipleQueriesRows(limit ?? 20, offset ?? 0);
     return Results.Ok(results);
 });
 
-app.MapGet("/database/single-write", async (Db db) =>
+app.MapGet("/database/single-write", async (Db db, int? id, int? randomNumber) =>
 {
-    var world = await db.SingleWriteRow();
+    var world = await db.SingleWriteRow(id ?? 1, randomNumber ?? 1);
     return world != null ? Results.Ok(world) : Results.NotFound();
 });
 
-app.MapGet("/database/multiple-write", async (Db db) =>
+app.MapGet("/database/multiple-write", async (Db db, int? limit, int? offset, string? r) =>
 {
-    var results = await db.MultipleWriteRows();
+    var rns = string.IsNullOrEmpty(r) ? Array.Empty<int>() : r.Split(',').Select(val => int.TryParse(val, out var parsed) ? parsed : 1).ToArray();
+    var results = await db.MultipleWriteRows(limit ?? 20, offset ?? 0, rns);
     return Results.Ok(results);
 });
 

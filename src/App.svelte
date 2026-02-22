@@ -40,7 +40,7 @@
     reportData && competitors.length > 0 ? competitors.map((comp, i) => {
        return {
          label: comp,
-         data: testTypes.map((t: string) => Math.round((reportData.result[comp][t]?.avgResponseTimeSecs || 0) * 1000)), // converted to ms
+         data: testTypes.map((t: string) => Math.round(reportData.result[comp][t]?.latencyAverageMs || 0)),
          backgroundColor: chartColors[i % chartColors.length],
          borderRadius: 4
        };
@@ -48,14 +48,21 @@
   );
 
   const metricsList = [
-    { key: 'totalRequests', label: 'Total Requests' },
+    { key: 'totalRequests', label: 'Requests' },
     { key: 'requestsPerSecond', label: 'Req/Sec' },
-    { key: 'avgResponseTimeSecs', label: 'Avg Latency', format: (v: number) => v.toFixed(4) + 's' },
-    { key: 'maxResponseTimeSecs', label: 'Max Latency', format: (v: number) => v.toFixed(4) + 's' },
-    { key: 'errorRatePercent', label: 'Error Rate', format: (v: number) => v + '%' },
-    { key: 'peakCpuUsage', label: 'Peak CPU', format: (v: number) => v + 'm' },
-    { key: 'peakMemoryUsage', label: 'Peak Mem', format: (v: number) => v + 'MB' },
-    { key: 'peakConnectionCount', label: 'Peak DB Conn' }
+    { key: 'latencyAverageMs', label: 'Avg Latency', format: (v: number) => v.toFixed(2) + 'ms' },
+    { key: 'latencyMaxMs', label: 'Max Latency', format: (v: number) => v.toFixed(2) + 'ms' },
+    { key: 'errorCount', label: 'Errors', format: (v: number) => (v || 0) },
+    { key: 'errorPercent', label: 'Error %', format: (v: number) => v + '%' },
+    { key: 'cpuUsagePeak', label: 'App Peak CPU', format: (v: number) => (v || 0) + 'm' },
+    { key: 'cpuUsagePeakPercent', label: 'App CPU %', format: (v: number) => (v || 0) + '%' },
+    { key: 'memUsagePeak', label: 'App Peak RAM', format: (v: number) => (v || 0) + 'Mi' },
+    { key: 'memUsagePeakPercent', label: 'App RAM %', format: (v: number) => (v || 0) + '%' },
+    { key: 'dbCpuUsagePeak', label: 'DB Peak CPU', format: (v: number) => (v || 0) + 'm' },
+    { key: 'dbCpuUsagePeakPercent', label: 'DB CPU %', format: (v: number) => (v || 0) + '%' },
+    { key: 'dbMemUsagePeak', label: 'DB Peak RAM', format: (v: number) => (v || 0) + 'Mi' },
+    { key: 'dbMemUsagePeakPercent', label: 'DB RAM %', format: (v: number) => (v || 0) + '%' },
+    { key: 'dbConnectionCountPeak', label: 'Max DB Conns', format: (v: number) => (v || 0) }
   ];
 
   onMount(async () => {
@@ -217,12 +224,8 @@
              <span class="value">{reportData.configs?.test?.duration || 'N/A'}</span>
            </div>
            <div class="stat-box">
-             <span class="label">Connections</span>
-             <span class="value">{reportData.configs?.test?.connections || 'N/A'}</span>
-           </div>
-           <div class="stat-box">
-             <span class="label">Threads</span>
-             <span class="value">{reportData.configs?.test?.threads || 'N/A'}</span>
+             <span class="label">Virtual Users</span>
+             <span class="value">{reportData.configs?.test?.vus || reportData.configs?.test?.connections || 'N/A'}</span>
            </div>
            <div class="stat-box">
              <span class="label">DB Resources (Req)</span>

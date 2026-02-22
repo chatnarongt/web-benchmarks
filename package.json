@@ -1,23 +1,24 @@
 {
-    "name": "web-benchmarks",
-    "version": "1.0.0",
-    "scripts": {
-        "start": "bun run scripts/runner.ts",
-        "clean": "bun run scripts/clean.ts",
-        "dev": "vite",
-        "build": "vite build",
-        "serve": "vite preview"
-    },
-    "dependencies": {
-        "chart.js": "^4.5.1",
-        "js-yaml": "^4.1.0"
-    },
-    "devDependencies": {
-        "@sveltejs/vite-plugin-svelte": "^6.2.4",
-        "@tsconfig/svelte": "^5.0.8",
-        "@types/js-yaml": "^4.0.9",
-        "bun-types": "^1.1.20",
-        "svelte": "^5.53.1",
-        "vite": "^7.3.1"
-    }
+  "name": "web-benchmarks",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite",
+    "start:viewer": "vite preview",
+    "prestart:viewer": "vite build",
+    "start:bench": "bun run scripts/runner.ts",
+    "clean:bench": "bun run scripts/clean.ts"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "@tsconfig/svelte": "^5.0.8",
+    "@types/js-yaml": "^4.0.9",
+    "@types/k6": "^1.6.0",
+    "bun-types": "^1.1.20",
+    "svelte": "^5.53.1",
+    "vite": "^7.3.1"
+  }
 }

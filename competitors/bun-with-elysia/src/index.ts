@@ -10,34 +10,36 @@ const sql = new SQL({
 new Elysia()
   .get("/plaintext", () => "Hello World!")
   .get("/json", () => ({ message: "Hello World!" }))
-  .get("/database/single-read", async () => {
-    const id = Math.floor(Math.random() * 10000) + 1;
+  .get("/database/single-read", async ({ query }) => {
+    const id = +(query.id as string) || 1;
     const [world] = await sql`SELECT id, randomnumber AS "randomNumber" FROM World WHERE id = ${id}`;
     return world;
   })
-  .get("/database/multiple-read", async () => {
-    const limit = 20;
-    const offset = Math.floor(Math.random() * (10000 - limit));
+  .get("/database/multiple-read", async ({ query }) => {
+    const limit = +(query.limit as string) || 20;
+    const offset = +(query.offset as string) || 0;
     return await sql`SELECT id, randomnumber AS "randomNumber" FROM World LIMIT ${limit} OFFSET ${offset}`;
   })
-  .get("/database/single-write", async () => {
-    const id = Math.floor(Math.random() * 10000) + 1;
+  .get("/database/single-write", async ({ query }) => {
+    const id = +(query.id as string) || 1;
     const [world] = await sql`SELECT id, randomnumber AS "randomNumber" FROM World WHERE id = ${id}`;
     if (world) {
-      const newRandomNumber = Math.floor(Math.random() * 10000) + 1;
+      const newRandomNumber = +(query.randomNumber as string) || 1;
       await sql`UPDATE World SET randomNumber = ${newRandomNumber} WHERE id = ${id}`;
       world.randomNumber = newRandomNumber;
     }
     return world;
   })
-  .get("/database/multiple-write", async () => {
-    const limit = 20;
-    const offset = Math.floor(Math.random() * (10000 - limit));
+  .get("/database/multiple-write", async ({ query }) => {
+    const limit = +(query.limit as string) || 20;
+    const offset = +(query.offset as string) || 0;
+    const rVals = (query.r as string || '').split(',').map(n => +n || 1);
+
     const worlds = await sql`SELECT id, randomnumber AS "randomNumber" FROM World LIMIT ${limit} OFFSET ${offset}`;
 
     if (worlds && worlds.length > 0) {
-      const values = worlds.map((w: any) => {
-        w.randomNumber = Math.floor(Math.random() * 10000) + 1;
+      const values = worlds.map((w: any, index: number) => {
+        w.randomNumber = rVals[index] || 1;
         return `(${w.id}, ${w.randomNumber})`;
       }).join(', ');
 

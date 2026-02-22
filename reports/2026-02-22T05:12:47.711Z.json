@@ -1,0 +1,78 @@
+{
+  "startTime": "2026-02-22T05:12:47.711Z",
+  "endTime": "2026-02-22T05:13:44.230Z",
+  "configs": {
+    "competitors": [
+      {
+        "name": "bun-with-elysia",
+        "database": "postgres",
+        "env": {
+          "DATABASE_URL": "postgres://postgres:postgres@postgres:5432/postgres",
+          "MAX_DB_CONNECTIONS": 100
+        }
+      }
+    ],
+    "test": {
+      "types": [
+        "plaintext"
+      ],
+      "concurrency": 1,
+      "vus": 10,
+      "duration": "5s",
+      "warmupDuration": "5s",
+      "idleWaitDuration": "5s",
+      "databaseSettleDuration": "10s"
+    },
+    "resources": {
+      "replicas": 1,
+      "requests": {
+        "cpu": "1",
+        "memory": "512Mi"
+      },
+      "limits": {
+        "cpu": "1",
+        "memory": "512Mi"
+      }
+    },
+    "databaseResources": {
+      "requests": {
+        "cpu": "1",
+        "memory": "1Gi"
+      },
+      "limits": {
+        "cpu": "1",
+        "memory": "1Gi"
+      }
+    }
+  },
+  "result": {
+    "bun-with-elysia": {
+      "plaintext": {
+        "totalRequests": 167971,
+        "requestsPerSecond": 33587.96,
+        "latencyAverageMs": 0.2225,
+        "latencyMaxMs": 9.5152,
+        "errorCount": 0,
+        "errorPercent": 0,
+        "cpuUsageIdle": 306,
+        "cpuUsagePeak": 306,
+        "memUsageIdle": 14,
+        "memUsagePeak": 14,
+        "cpuUsageIdlePercent": 30.6,
+        "cpuUsagePeakPercent": 30.6,
+        "memUsageIdlePercent": 2.73,
+        "memUsagePeakPercent": 2.73,
+        "dbConnectionCountIdle": 0,
+        "dbConnectionCountPeak": 0,
+        "dbCpuUsageIdle": 2,
+        "dbCpuUsagePeak": 9,
+        "dbMemUsageIdle": 89,
+        "dbMemUsagePeak": 91,
+        "dbCpuUsageIdlePercent": 0.2,
+        "dbCpuUsagePeakPercent": 0.9,
+        "dbMemUsageIdlePercent": 8.69,
+        "dbMemUsagePeakPercent": 8.89
+      }
+    }
+  }
+}

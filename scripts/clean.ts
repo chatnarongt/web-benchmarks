@@ -1,69 +1,40 @@
 /// <reference types="bun-types" />
-import * as fs from "fs";
-import * as yaml from "js-yaml";
 import { $ } from "bun";
 
-interface CompetitorConfig {
-    name: string;
-}
-
-interface BenchmarkConfig {
-    competitors: CompetitorConfig[];
-}
-
 async function main() {
-    console.log("🧹 Cleaning up lingering resources...");
+    console.log("🧹 Cleaning up lingering benchmark resources...");
 
     // 1. Delete all deployments and services
+    // We use labels where possible, or specific names
     try {
-        await $`kubectl delete deployment --all`.quiet();
-        await $`kubectl delete service --all`.quiet();
-    } catch (e) {
-        // ignore errors if nothing to delete
-    }
+        // Delete deployments and services for competitors
+        await $`kubectl delete deployments,services -l app --ignore-not-found`.quiet();
 
-    // 2. Parse configuration to get competitor names for 'wrk' pods
-    try {
-        const fileContents = fs.readFileSync("bench.config.yml", "utf8");
-        const config = yaml.load(fileContents) as BenchmarkConfig;
+        // Explicitly delete postgres and mssql resources just in case they lack labels or were named differently
+        await $`kubectl delete deployments,services,configmaps postgres-deployment postgres-service postgres-init-script mssql-deployment mssql-service mssql-init-script --ignore-not-found`.quiet();
 
-        // Delete wrk-test pods for each competitor
-        for (const competitorConfig of config.competitors) {
-            const competitor = competitorConfig.name;
-            try {
-                await $`kubectl delete pods -l run=wrk-test-${competitor}-plaintext --ignore-not-found`.quiet();
-                await $`kubectl delete pods -l run=wrk-test-${competitor}-json --ignore-not-found`.quiet();
-            } catch (e) {
-                // ignore
-            }
+        // Delete any pods created by kubectl run (k6 pods)
+        // We can use a pattern if kubectl delete pod supports it, otherwise we get all and filter
+        const podsOutput = await $`kubectl get pods --no-headers -o custom-columns=":metadata.name"`.text();
+        const benchmarkPods = podsOutput.split("\n")
+            .map(p => p.trim())
+            .filter(p => p.startsWith("k6-warmup-") || p.startsWith("k6-test-"));
+
+        if (benchmarkPods.length > 0) {
+            console.log(`🗑️ Deleting ${benchmarkPods.length} lingering k6 pods...`);
+            await $`kubectl delete pod ${benchmarkPods} --ignore-not-found`.quiet();
         }
+
+        // Delete metrics-server if we want a truly clean state?
+        // Usually we want to keep metrics-server if it was set up by the runner.
+        // The runner checks if it's there. Let's leave it.
     } catch (e) {
-        console.log("Could not find or parse bench.config.yml, skipping wrk pod cleanup.");
+        // console.warn("Cleanup warning:", e);
     }
 
-    // 3. Remove generated manifests
+    // 2. Remove generated manifests in /tmp
     try {
-        await $`rm -f /tmp/*-manifest.yml`.quiet();
-    } catch (e) {
-        // ignore
-    }
-
-    // 4. Cleanup PostgreSQL resources
-    try {
-        await $`kubectl delete deployment postgres-deployment --ignore-not-found`.quiet();
-        await $`kubectl delete service postgres-service --ignore-not-found`.quiet();
-        await $`kubectl delete configmap postgres-init-script --ignore-not-found`.quiet();
-        await $`rm -f /tmp/postgres-manifest.yml`.quiet();
-    } catch (e) {
-        // ignore
-    }
-
-    // 5. Cleanup MSSQL resources
-    try {
-        await $`kubectl delete deployment mssql-deployment --ignore-not-found`.quiet();
-        await $`kubectl delete service mssql-service --ignore-not-found`.quiet();
-        await $`kubectl delete configmap mssql-init-script --ignore-not-found`.quiet();
-        await $`rm -f /tmp/mssql-manifest.yml`.quiet();
+        await $`rm -f /tmp/*.yml`.quiet(); // Slightly broader but likely safe for /tmp in this context
     } catch (e) {
         // ignore
     }
