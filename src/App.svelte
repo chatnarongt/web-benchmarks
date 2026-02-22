@@ -49,6 +49,21 @@
     'database/multiple-write': 'Multiple Writes',
   }
 
+  function getReportLabel(filename: string) {
+    try {
+      if (filename.endsWith('.json')) {
+        const base = filename.replace('.json', '');
+        const [dPart, tPart] = base.split('T');
+        if (tPart) {
+          const iso = `${dPart}T${tPart.replace(/-/g, ':')}`;
+          const d = new Date(iso);
+          if (!isNaN(d.getTime())) return d.toLocaleString('th');
+        }
+      }
+    } catch(e) {}
+    return filename;
+  }
+
   function resetCompetitors() {
     selectedCompetitors = allCompetitors.slice(0, 10);
   }
@@ -257,10 +272,11 @@
 
   function getPctClass(val: number | undefined) {
     const p = val || 0;
-    if (p >= 90) return 'text-red-500 dark:text-red-400';
-    if (p >= 70) return 'text-orange-500 dark:text-orange-400';
-    if (p >= 50) return 'text-yellow-500 dark:text-yellow-400';
-    return 'text-green-500 dark:text-green-400';
+    if (p >= 90) return 'text-rose-500 dark:text-rose-400 font-bold';
+    if (p >= 70) return 'text-orange-500 dark:text-orange-400 font-semibold';
+    if (p >= 50) return 'text-amber-500 dark:text-amber-400 font-medium';
+    if (p >= 30) return 'text-lime-500 dark:text-lime-400';
+    return 'text-emerald-500 dark:text-emerald-400';
   }
 
   function formatMemory(val: any) {
@@ -293,7 +309,7 @@
         <Label for="report-select" class="whitespace-nowrap text-gray-600 dark:text-gray-300">Select Local Report:</Label>
         <Select
           id="report-select"
-          items={availableReports.map(r => ({value: r, name: r}))}
+          items={availableReports.map(r => ({value: r, name: getReportLabel(r)}))}
           bind:value={selectedReportName}
           onchange={handleSelectChange}
           placeholder="-- Select Report --"
