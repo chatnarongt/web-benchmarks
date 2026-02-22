@@ -33,6 +33,12 @@ competitors:
     env:
       ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Min Pool Size=1;Max Pool Size=100;"
 
+  - name: go-with-gin
+    database: postgres
+    env:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+      MAX_DB_CONNECTIONS: 100
+
 test:
   types:
     - plaintext
@@ -43,10 +49,10 @@ test:
     - database/multiple-write
   concurrency: 1 # Number of concurrent competitors tested (1 = sequentially)
   vus: 128 # total number of virtual users to use for the test
-  duration: 1m # duration of the test for each type, e.g. 2s, 2m, 2h
-  warmupDuration: 15s # duration of the warm-up test before the actual benchmark
-  idleWaitDuration: 20s # duration to wait after warmup before starting the actual test
-  databaseSettleDuration: 30s # duration to wait for database to settle after deployment
+  duration: 10s # Default: 5m, duration of the test for each type, e.g. 2s, 2m, 2h
+  warmupDuration: 0s # Default: 15s, duration of the warm-up test before the actual benchmark
+  idleWaitDuration: 0s # Default: 20s, duration to wait after warmup before starting the actual test
+  databaseSettleDuration: 10s # Default: 30s, duration to wait for database to settle after deployment
 
 resources: # Resources for the competitors
   replicas: 1
@@ -59,8 +65,8 @@ resources: # Resources for the competitors
 
 databaseResources: # Resources for the database
   requests:
-    cpu: "4"
-    memory: "4Gi"
+    cpu: "1"
+    memory: "1Gi"
   limits:
-    cpu: "4"
-    memory: "4Gi"
+    cpu: "1"
+    memory: "1Gi"
