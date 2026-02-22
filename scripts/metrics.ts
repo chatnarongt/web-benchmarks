@@ -39,9 +39,11 @@ export async function getDbConnectionCount(deploymentName: string, dbType: "post
                 const parts = line.trim().split(/\s+/);
                 if (parts.length < 4) return false;
                 const localAddr = parts[1];
+                const remAddr = parts[2];
                 const state = parts[3];
                 // Match established state (01) and strictly the target port in hex
-                return localAddr && localAddr.endsWith(`:${portHex}`) && state === "01";
+                // 0100007F is 127.0.0.1 in little-endian hex notation used by /proc/net/tcp
+                return localAddr && localAddr.endsWith(`:${portHex}`) && state === "01" && remAddr && !remAddr.startsWith("0100007F:");
             });
             return procConnections.length;
         }
@@ -49,13 +51,16 @@ export async function getDbConnectionCount(deploymentName: string, dbType: "post
         // 2. Fallback to parsing netstat/ss style output
         const netstatConnections = lines.filter(line => {
             const parts = line.trim().split(/\s+/);
-            if (parts.length < 4) return false;
+            if (parts.length < 5) return false;
 
             const isNetstat = parts[0].startsWith("tcp");
             const state = isNetstat ? parts[5] : parts[0];
             const localAddr = isNetstat ? parts[3] : (parts.length > 3 ? parts[3] : "");
+            const remAddr = isNetstat ? parts[4] : (parts.length > 4 ? parts[4] : "");
 
-            return localAddr && localAddr.endsWith(`:${port}`) && (state === "ESTABLISHED" || state === "ESTAB");
+            return localAddr && localAddr.endsWith(`:${port}`) &&
+                (state === "ESTABLISHED" || state === "ESTAB") &&
+                remAddr && !remAddr.startsWith("127.0.0.1:");
         });
 
         return netstatConnections.length;
