@@ -2,9 +2,9 @@
 import { $ } from "bun";
 
 // Parses `kubectl top pod` output into cpu (millicores) and memory (MB)
-export async function getPodMetrics(competitor: string): Promise<{ cpu: number, memory: number }> {
+export async function getPodMetrics(label: string): Promise<{ cpu: number, memory: number }> {
     try {
-        const topOutput = await $`kubectl top pod -l app=${competitor} --no-headers`.text();
+        const topOutput = await $`kubectl top pod -l app=${label} --no-headers`.text();
         const lines = topOutput.trim().split("\n");
         if (lines.length > 0 && lines[0]) {
             const parts = lines[0].trim().split(/\s+/);
@@ -23,13 +23,12 @@ export async function getPodMetrics(competitor: string): Promise<{ cpu: number, 
     return { cpu: 0, memory: 0 };
 }
 
-export async function getDbConnectionCount(dbType: "postgres" | "mssql"): Promise<number> {
+export async function getDbConnectionCount(deploymentName: string, dbType: "postgres" | "mssql"): Promise<number> {
     try {
         const port = dbType === "postgres" ? 5432 : 1433;
         const portHex = port.toString(16).toUpperCase().padStart(4, '0');
-        const deployment = `${dbType}-deployment`;
 
-        const output = await $`kubectl exec deployment/${deployment} -- sh -c "cat /proc/net/tcp /proc/net/tcp6 2>/dev/null || netstat -tan 2>/dev/null || ss -tan 2>/dev/null"`.text();
+        const output = await $`kubectl exec deployment/${deploymentName} -- sh -c "cat /proc/net/tcp /proc/net/tcp6 2>/dev/null || netstat -tan 2>/dev/null || ss -tan 2>/dev/null"`.text();
         const lines = output.trim().split("\n");
 
         if (lines.length === 0) return 0;

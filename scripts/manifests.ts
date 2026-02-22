@@ -55,13 +55,19 @@ spec:
 `;
 }
 
-export function generatePostgresManifest(resources: any): string {
+export function generatePostgresManifest(resources: any, suffix: string = ""): string {
+  const nameSuffix = suffix ? `-${suffix}` : "";
+  const deploymentName = `postgres-deployment${nameSuffix}`;
+  const serviceName = `postgres-service${nameSuffix}`;
+  const configMapName = `postgres-init-script${nameSuffix}`;
+  const appLabel = `postgres${nameSuffix}`;
+
   return `
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: postgres-init-script
+  name: ${configMapName}
 data:
   init.sql: |
     CREATE TABLE World (
@@ -73,16 +79,16 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres-deployment
+  name: ${deploymentName}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postgres
+      app: ${appLabel}
   template:
     metadata:
       labels:
-        app: postgres
+        app: ${appLabel}
     spec:
       containers:
       - name: postgres
@@ -107,15 +113,15 @@ spec:
       volumes:
       - name: init-script
         configMap:
-          name: postgres-init-script
+          name: ${configMapName}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres-service
+  name: ${serviceName}
 spec:
   selector:
-    app: postgres
+    app: ${appLabel}
   ports:
     - protocol: TCP
       port: 5432
@@ -123,13 +129,19 @@ spec:
 `;
 }
 
-export function generateMssqlManifest(resources: any): string {
+export function generateMssqlManifest(resources: any, suffix: string = ""): string {
+  const nameSuffix = suffix ? `-${suffix}` : "";
+  const deploymentName = `mssql-deployment${nameSuffix}`;
+  const serviceName = `mssql-service${nameSuffix}`;
+  const configMapName = `mssql-init-script${nameSuffix}`;
+  const appLabel = `mssql${nameSuffix}`;
+
   return `
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: mssql-init-script
+  name: ${configMapName}
 data:
   init.sql: |
     IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'benchmark')
@@ -183,16 +195,16 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mssql-deployment
+  name: ${deploymentName}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mssql
+      app: ${appLabel}
   template:
     metadata:
       labels:
-        app: mssql
+        app: ${appLabel}
     spec:
       containers:
       - name: mssql
@@ -218,16 +230,16 @@ spec:
       volumes:
       - name: scripts
         configMap:
-          name: mssql-init-script
+          name: ${configMapName}
           defaultMode: 0755
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mssql-service
+  name: ${serviceName}
 spec:
   selector:
-    app: mssql
+    app: ${appLabel}
   ports:
     - protocol: TCP
       port: 1433

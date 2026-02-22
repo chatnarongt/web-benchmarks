@@ -9,8 +9,13 @@
     "clean:bench": "bun run scripts/clean.ts"
   },
   "dependencies": {
+    "autoprefixer": "^10.4.24",
     "chart.js": "^4.5.1",
-    "js-yaml": "^4.1.0"
+    "flowbite": "^4.0.1",
+    "flowbite-svelte": "^1.31.0",
+    "js-yaml": "^4.1.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^6.2.4",

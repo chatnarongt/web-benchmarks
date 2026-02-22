@@ -58,6 +58,15 @@ databaseResources: # Resources for the database
 
 To add a new framework to test, simply create a new directory inside `competitors/` containing the source and a valid `Dockerfile`, and then add its directory name to the `competitors` list.
 
+### Database Configuration (Important)
+
+If your competitor uses a database (e.g., `database: postgres` or `database: mssql`), you **must** use the following placeholder hostnames in your connection strings inside `bench.config.yml`:
+
+- PostgreSQL: `postgres-service`
+- MSSQL: `mssql-service`
+
+The orchestration runner spins up an isolated, uniquely named database for *each* competitor. During deployment, the runner will dynamically find these placeholder hostnames in your `env` variables and replace them with the actual generated Kubernetes service name for that specific competitor.
+
 ## Usage
 
 Start the automated benchmarking process by simply running:

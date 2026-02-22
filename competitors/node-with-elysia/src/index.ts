@@ -2,12 +2,7 @@ import { Elysia } from "elysia";
 import { node } from '@elysiajs/node'
 import postgres from "postgres";
 
-const sql = postgres({
-  host: "postgres-service",
-  port: 5432,
-  database: "benchmark",
-  username: "postgres",
-  password: "benchmark",
+const sql = postgres(process.env.DATABASE_URL || "postgres://postgres:benchmark@postgres-service:5432/benchmark", {
   max: 100,
   idle_timeout: 0,
 });

@@ -3,12 +3,11 @@ package main
 import (
 	"database/sql"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/lib/pq"
 )
 
@@ -46,41 +45,39 @@ func main() {
 	db.SetMaxOpenConns(maxConns)
 	db.SetMaxIdleConns(maxConns)
 
-	gin.SetMode(gin.ReleaseMode)
-	r := gin.New()
-	r.Use(gin.Recovery())
-
-	r.GET("/plaintext", func(c *gin.Context) {
-		c.String(http.StatusOK, "Hello World!")
+	app := fiber.New(fiber.Config{
+		DisableStartupMessage: true,
 	})
 
-	r.GET("/json", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "Hello World!"})
+	app.Get("/plaintext", func(c *fiber.Ctx) error {
+		return c.SendString("Hello World!")
 	})
 
-	r.GET("/database/single-read", func(c *gin.Context) {
-		idStr := c.DefaultQuery("id", "1")
+	app.Get("/json", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{"message": "Hello World!"})
+	})
+
+	app.Get("/database/single-read", func(c *fiber.Ctx) error {
+		idStr := c.Query("id", "1")
 		id, _ := strconv.Atoi(idStr)
 
 		var w World
 		err := db.QueryRow("SELECT id, randomnumber FROM World WHERE id = $1", id).Scan(&w.Id, &w.RandomNumber)
 		if err != nil {
-			c.Status(http.StatusInternalServerError)
-			return
+			return c.SendStatus(fiber.StatusInternalServerError)
 		}
-		c.JSON(http.StatusOK, w)
+		return c.JSON(w)
 	})
 
-	r.GET("/database/multiple-read", func(c *gin.Context) {
-		limitStr := c.DefaultQuery("limit", "20")
-		offsetStr := c.DefaultQuery("offset", "0")
+	app.Get("/database/multiple-read", func(c *fiber.Ctx) error {
+		limitStr := c.Query("limit", "20")
+		offsetStr := c.Query("offset", "0")
 		limit, _ := strconv.Atoi(limitStr)
 		offset, _ := strconv.Atoi(offsetStr)
 
 		rows, err := db.Query("SELECT id, randomnumber FROM World LIMIT $1 OFFSET $2", limit, offset)
 		if err != nil {
-			c.Status(http.StatusInternalServerError)
-			return
+			return c.SendStatus(fiber.StatusInternalServerError)
 		}
 		defer rows.Close()
 
@@ -88,40 +85,37 @@ func main() {
 		for rows.Next() {
 			var w World
 			if err := rows.Scan(&w.Id, &w.RandomNumber); err != nil {
-				c.Status(http.StatusInternalServerError)
-				return
+				return c.SendStatus(fiber.StatusInternalServerError)
 			}
 			worlds = append(worlds, w)
 		}
-		c.JSON(http.StatusOK, worlds)
+		return c.JSON(worlds)
 	})
 
-	r.GET("/database/single-write", func(c *gin.Context) {
-		idStr := c.DefaultQuery("id", "1")
-		rnStr := c.DefaultQuery("randomNumber", "1")
+	app.Get("/database/single-write", func(c *fiber.Ctx) error {
+		idStr := c.Query("id", "1")
+		rnStr := c.Query("randomNumber", "1")
 		id, _ := strconv.Atoi(idStr)
 		rn, _ := strconv.Atoi(rnStr)
 
 		var w World
 		err := db.QueryRow("SELECT id, randomnumber FROM World WHERE id = $1", id).Scan(&w.Id, &w.RandomNumber)
 		if err != nil {
-			c.Status(http.StatusInternalServerError)
-			return
+			return c.SendStatus(fiber.StatusInternalServerError)
 		}
 
 		_, err = db.Exec("UPDATE World SET randomnumber = $1 WHERE id = $2", rn, id)
 		if err != nil {
-			c.Status(http.StatusInternalServerError)
-			return
+			return c.SendStatus(fiber.StatusInternalServerError)
 		}
 
 		w.RandomNumber = rn
-		c.JSON(http.StatusOK, w)
+		return c.JSON(w)
 	})
 
-	r.GET("/database/multiple-write", func(c *gin.Context) {
-		limitStr := c.DefaultQuery("limit", "20")
-		offsetStr := c.DefaultQuery("offset", "0")
+	app.Get("/database/multiple-write", func(c *fiber.Ctx) error {
+		limitStr := c.Query("limit", "20")
+		offsetStr := c.Query("offset", "0")
 		limit, _ := strconv.Atoi(limitStr)
 		offset, _ := strconv.Atoi(offsetStr)
 
@@ -130,8 +124,7 @@ func main() {
 
 		rows, err := db.Query("SELECT id, randomnumber FROM World LIMIT $1 OFFSET $2", limit, offset)
 		if err != nil {
-			c.Status(http.StatusInternalServerError)
-			return
+			return c.SendStatus(fiber.StatusInternalServerError)
 		}
 		defer rows.Close()
 
@@ -140,8 +133,7 @@ func main() {
 		for rows.Next() {
 			var w World
 			if err := rows.Scan(&w.Id, &w.RandomNumber); err != nil {
-				c.Status(http.StatusInternalServerError)
-				return
+				return c.SendStatus(fiber.StatusInternalServerError)
 			}
 			worlds = append(worlds, w)
 			ids = append(ids, w.Id)
@@ -163,17 +155,16 @@ func main() {
 				pq.Array(ids), pq.Array(rns))
 			if err != nil {
 				log.Printf("Batch update error: %v", err)
-				c.Status(http.StatusInternalServerError)
-				return
+				return c.SendStatus(fiber.StatusInternalServerError)
 			}
 		}
 
-		c.JSON(http.StatusOK, worlds)
+		return c.JSON(worlds)
 	})
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "3000"
 	}
-	r.Run(":" + port)
+	app.Listen(":" + port)
 }

@@ -2,7 +2,7 @@ using DotnetMinimalApis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-string connectionString = "Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Minimum Pool Size=1;Maximum Pool Size=100;";
+string connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") ?? "Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Minimum Pool Size=1;Maximum Pool Size=100;";
 builder.Services.AddScoped(_ => new Db(connectionString));
 
 var app = builder.Build();

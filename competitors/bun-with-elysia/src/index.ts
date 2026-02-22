@@ -2,7 +2,7 @@ import { Elysia } from "elysia";
 import { SQL } from "bun";
 
 const sql = new SQL({
-  url: "postgres://postgres:benchmark@postgres-service:5432/benchmark",
+  url: process.env.DATABASE_URL || "postgres://postgres:benchmark@postgres-service:5432/benchmark",
   max: 100,
   idleTimeout: 0,
 });

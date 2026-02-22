@@ -2,7 +2,7 @@ using DotnetMinimalApisMssql;
 
 var builder = WebApplication.CreateBuilder(args);
 
-string benchmarkConnectionString = "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Min Pool Size=1;Max Pool Size=100;";
+string benchmarkConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL") ?? "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Min Pool Size=1;Max Pool Size=100;";
 builder.Services.AddScoped(_ => new Db(benchmarkConnectionString));
 
 var app = builder.Build();

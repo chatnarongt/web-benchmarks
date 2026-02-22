@@ -1,4 +1,44 @@
 /// <reference types="bun-types" />
+import * as fs from "fs";
+import * as yaml from "js-yaml";
+
+export interface CompetitorConfig {
+  name: string;
+  database?: "postgres" | "mssql";
+  env?: Record<string, string>;
+}
+
+export interface BenchmarkConfig {
+  competitors: CompetitorConfig[];
+  test: {
+    types: string[];
+    concurrency: number;
+    vus: number;
+    duration: string;
+    warmupDuration: string;
+    idleWaitDuration: string;
+    databaseSettleDuration: string;
+    logMode?: "verbose" | "summary" | "silent";
+  };
+  resources: {
+    replicas: number;
+    requests: { cpu: string; memory: string };
+    limits: { cpu: string; memory: string };
+  };
+  databaseResources: {
+    requests: { cpu: string; memory: string };
+    limits: { cpu: string; memory: string };
+  };
+}
+
+export function parseConfig(configPath: string = "bench.config.yml"): BenchmarkConfig {
+  if (!fs.existsSync(configPath)) {
+    throw new Error(`Configuration file not found: ${configPath}`);
+  }
+  const fileContents = fs.readFileSync(configPath, "utf8");
+  return yaml.load(fileContents) as BenchmarkConfig;
+}
+
 // Helper to safely convert wrk time format to seconds
 export function parseTimeToSeconds(timeStr: string): number {
   if (!timeStr) return 0;

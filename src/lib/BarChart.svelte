@@ -2,15 +2,26 @@
   import { onMount, onDestroy } from 'svelte';
   import Chart from 'chart.js/auto';
 
-  let { title, customLabels, datasets, yAxisLabel = '' } = $props<{
+  let { title, customLabels, datasets, yAxisLabel = '', hideYAxisLabels = false } = $props<{
     title: string;
     customLabels: string[];
     datasets: any[];
     yAxisLabel?: string;
+    hideYAxisLabels?: boolean;
   }>();
 
   let canvas: HTMLCanvasElement;
   let chart: Chart | null = null;
+
+  let visibleCount = $state(0);
+
+  $effect(() => {
+    if (datasets) {
+       visibleCount = datasets.length;
+    }
+  });
+
+  let chartHeight = $derived(Math.max(400, (customLabels?.length || 0) * visibleCount * 24 + 100));
 
   function initChart() {
     if (chart) {
@@ -19,6 +30,8 @@
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    visibleCount = datasets?.length || 0;
+
     chart = new Chart(ctx, {
       type: 'bar',
       data: {
@@ -26,6 +39,7 @@
         datasets: datasets
       },
       options: {
+        indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -37,7 +51,25 @@
             padding: { bottom: 20 }
           },
           legend: {
-            labels: { color: '#94a3b8', font: { family: 'Inter' } }
+            display: datasets && datasets.length > 1,
+            position: 'bottom',
+            labels: { color: '#94a3b8', font: { family: 'Inter' } },
+            onClick: function(e, legendItem, legend) {
+              const index = legendItem.datasetIndex;
+              if (index === undefined) return;
+              const ci = legend.chart;
+              if (ci.isDatasetVisible(index)) {
+                  ci.hide(index);
+              } else {
+                  ci.show(index);
+              }
+
+              let count = 0;
+              for (let i = 0; i < ci.data.datasets.length; i++) {
+                  if (ci.isDatasetVisible(i)) count++;
+              }
+              visibleCount = count;
+            }
           },
           tooltip: {
             backgroundColor: 'rgba(15, 23, 42, 0.9)',
@@ -49,7 +81,7 @@
           }
         },
         scales: {
-          y: {
+          x: {
             beginAtZero: true,
             grid: { color: 'rgba(255,255,255,0.05)' },
             ticks: { color: '#94a3b8', font: { family: 'Inter' } },
@@ -59,9 +91,9 @@
               color: '#94a3b8'
             }
           },
-          x: {
+          y: {
             grid: { display: false },
-            ticks: { color: '#94a3b8', font: { family: 'Inter' } }
+            ticks: { display: !hideYAxisLabels, color: '#94a3b8', font: { family: 'Inter' } }
           }
         }
       }
@@ -86,7 +118,7 @@
   });
 </script>
 
-<div class="chart-container">
+<div class="chart-container" style="height: {chartHeight}px">
   <canvas bind:this={canvas}></canvas>
 </div>
 
@@ -94,7 +126,5 @@
   .chart-container {
     position: relative;
     width: 100%;
-    height: 100%;
-    min-height: 400px;
   }
 </style>
