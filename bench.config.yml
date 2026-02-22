@@ -3,47 +3,47 @@ competitors:
     database: postgres
     env:
       DATABASE_URL: postgres://postgres:benchmark@postgres-service:5432/benchmark
-      MAX_DB_CONNECTIONS: 100
+      MAX_DB_CONNECTIONS: 50
 
   - name: node-with-elysia
     database: postgres
     env:
       DATABASE_URL: postgres://postgres:benchmark@postgres-service:5432/benchmark
-      MAX_DB_CONNECTIONS: 100
+      MAX_DB_CONNECTIONS: 50
 
   - name: dotnet-core
     database: postgres
     env:
-      DATABASE_URL: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=100;
-      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=100;
+      DATABASE_URL: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=50;
+      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=50;
 
   - name: dotnet-minimal-apis
     database: postgres
     env:
-      DATABASE_URL: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=100;
-      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=100;
+      DATABASE_URL: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=50;
+      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=50;
 
   - name: dotnet-core-mssql
     database: mssql
     env:
-      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=100;"
+      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=50;"
 
   - name: dotnet-minimal-apis-mssql
     database: mssql
     env:
-      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=100;"
+      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=50;"
 
   - name: go-with-gin
     database: postgres
     env:
       DATABASE_URL: postgres://postgres:benchmark@postgres-service:5432/benchmark?sslmode=disable
-      MAX_DB_CONNECTIONS: 100
+      MAX_DB_CONNECTIONS: 50
 
   - name: go-with-fiber
     database: postgres
     env:
       DATABASE_URL: postgres://postgres:benchmark@postgres-service:5432/benchmark?sslmode=disable
-      MAX_DB_CONNECTIONS: 100
+      MAX_DB_CONNECTIONS: 50
 
 test:
   types:
@@ -72,8 +72,8 @@ resources: # Resources for the competitors
 
 databaseResources: # Resources for the database
   requests:
-    cpu: "5"
+    cpu: "4"
     memory: "4Gi"
   limits:
-    cpu: "5"
+    cpu: "4"
     memory: "4Gi"

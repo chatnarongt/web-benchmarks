@@ -3,7 +3,7 @@ import { SQL } from "bun";
 
 const sql = new SQL({
   url: process.env.DATABASE_URL || "postgres://postgres:benchmark@postgres-service:5432/benchmark",
-  max: 100,
+  max: +(process.env.MAX_DB_CONNECTIONS || 100),
   idleTimeout: 0,
 });
 

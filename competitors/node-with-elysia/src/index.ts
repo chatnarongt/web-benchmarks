@@ -3,7 +3,7 @@ import { node } from '@elysiajs/node'
 import postgres from "postgres";
 
 const sql = postgres(process.env.DATABASE_URL || "postgres://postgres:benchmark@postgres-service:5432/benchmark", {
-  max: 100,
+  max: +(process.env.MAX_DB_CONNECTIONS || 100),
   idle_timeout: 0,
 });
 
