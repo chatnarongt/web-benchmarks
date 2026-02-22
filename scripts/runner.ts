@@ -149,10 +149,12 @@ async function main() {
                 // --- ACTUAL TEST PHASE ---
                 console.log(`[${competitor}] 🧨 Running load test '${testType}' with 'wrk' for ${config.test.duration}...`);
 
+                const isDbTest = testType.startsWith('database/');
+
                 // Capture Idle metrics before test
                 const idleMetrics = await getPodMetrics(competitor);
-                const idleConnections = dbType ? await getDbConnectionCount(dbType) : 0;
-                console.log(`[${competitor}] 💤 Idle Metrics -> CPU: ${idleMetrics.cpu}m, RAM: ${idleMetrics.memory}Mi, Connections: ${idleConnections}`);
+                const idleConnections = (dbType && isDbTest) ? await getDbConnectionCount(dbType) : undefined;
+                console.log(`[${competitor}] 💤 Idle Metrics -> CPU: ${idleMetrics.cpu}m, RAM: ${idleMetrics.memory}Mi${idleConnections !== undefined ? `, Connections: ${idleConnections}` : ''}`);
 
                 // Run wrk and capture output. We run it as a Job or a standalone Pod.
                 const wrkCommand = `wrk -t ${config.test.threads} -c ${config.test.connections} -d ${config.test.duration} --latency ${targetUrl}`;
@@ -171,11 +173,11 @@ async function main() {
                     if (!testRunning) return;
                     const [m, c] = await Promise.all([
                         getPodMetrics(competitor),
-                        dbType ? getDbConnectionCount(dbType) : Promise.resolve(0)
+                        (dbType && isDbTest) ? getDbConnectionCount(dbType) : Promise.resolve(undefined)
                     ]);
                     if (m.cpu > peakCpu) peakCpu = m.cpu;
                     if (m.memory > peakMemory) peakMemory = m.memory;
-                    if (c > peakConnections) peakConnections = c;
+                    if (c !== undefined && peakConnections !== undefined && c > peakConnections) peakConnections = c;
                 }, 1000);
 
                 const testOutput = await $`kubectl run wrk-test-${competitor}-${sanitizedTestType} --rm -i \

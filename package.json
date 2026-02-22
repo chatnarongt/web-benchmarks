@@ -5,7 +5,8 @@
         "start": "bun run scripts/runner.ts",
         "clean": "bun run scripts/clean.ts",
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build",
+        "serve": "vite preview"
     },
     "dependencies": {
         "chart.js": "^4.5.1",

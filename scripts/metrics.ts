@@ -29,30 +29,37 @@ export async function getDbConnectionCount(dbType: "postgres" | "mssql"): Promis
         const portHex = port.toString(16).toUpperCase().padStart(4, '0');
         const deployment = `${dbType}-deployment`;
 
-        // Try netstat, then ss, then fallback to raw /proc/net/tcp and /proc/net/tcp6
-        const output = await $`kubectl exec deployment/${deployment} -- sh -c "netstat -tan 2>/dev/null || ss -tan 2>/dev/null || cat /proc/net/tcp /proc/net/tcp6 2>/dev/null"`.text();
+        const output = await $`kubectl exec deployment/${deployment} -- sh -c "cat /proc/net/tcp /proc/net/tcp6 2>/dev/null || netstat -tan 2>/dev/null || ss -tan 2>/dev/null"`.text();
         const lines = output.trim().split("\n");
 
-        // 1. Try to parse netstat/ss style output first
-        const netstatConnections = lines.filter(line =>
-            (line.includes(`:${port}`) || line.includes(`.${port}`)) &&
-            (line.includes("ESTABLISHED") || line.includes("ESTAB"))
-        );
-        if (netstatConnections.length > 0) return netstatConnections.length;
+        if (lines.length === 0) return 0;
 
-        // 2. Fallback to parsing /proc/net/tcp format
-        // Header looks like: sl local_address rem_address st tx_queue rx_queue tr tm->when retrnsmt uid timeout inode
-        // local_address is at index 1, st (state) is at index 3
-        const procConnections = lines.filter(line => {
+        // 1. Try parsing /proc/net/tcp format first
+        if (lines[0].includes("local_address")) {
+            const procConnections = lines.filter(line => {
+                const parts = line.trim().split(/\s+/);
+                if (parts.length < 4) return false;
+                const localAddr = parts[1];
+                const state = parts[3];
+                // Match established state (01) and strictly the target port in hex
+                return localAddr && localAddr.endsWith(`:${portHex}`) && state === "01";
+            });
+            return procConnections.length;
+        }
+
+        // 2. Fallback to parsing netstat/ss style output
+        const netstatConnections = lines.filter(line => {
             const parts = line.trim().split(/\s+/);
             if (parts.length < 4) return false;
-            const localAddr = parts[1];
-            const state = parts[3];
-            // Match established state (01) and the target port in hex
-            return (localAddr.endsWith(`:${portHex}`) && state === "01");
+
+            const isNetstat = parts[0].startsWith("tcp");
+            const state = isNetstat ? parts[5] : parts[0];
+            const localAddr = isNetstat ? parts[3] : (parts.length > 3 ? parts[3] : "");
+
+            return localAddr && localAddr.endsWith(`:${port}`) && (state === "ESTABLISHED" || state === "ESTAB");
         });
 
-        return procConnections.length;
+        return netstatConnections.length;
     } catch (e) {
         // console.warn("Failed to get DB connection count:", e);
     }

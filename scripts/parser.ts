@@ -61,14 +61,19 @@ export function parseWrkOutput(output: string) {
     return metrics;
 }
 
-export function mergePodMetrics(parsedMetrics: any, idleCpu: number, peakCpu: number, idleMemory: number, peakMemory: number, idleConnections: number, peakConnections: number) {
-    return {
+export function mergePodMetrics(parsedMetrics: any, idleCpu: number, peakCpu: number, idleMemory: number, peakMemory: number, idleConnections?: number, peakConnections?: number) {
+    const result = {
         ...parsedMetrics,
         idleCpuUsage: idleCpu,
         peakCpuUsage: peakCpu,
         idleMemoryUsage: idleMemory,
-        peakMemoryUsage: peakMemory,
-        idleConnectionCount: idleConnections,
-        peakConnectionCount: peakConnections
+        peakMemoryUsage: peakMemory
     };
+    if (idleConnections !== undefined) {
+        result.idleConnectionCount = idleConnections;
+    }
+    if (peakConnections !== undefined) {
+        result.peakConnectionCount = peakConnections;
+    }
+    return result;
 }

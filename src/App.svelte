@@ -129,6 +129,42 @@
     };
     reader.readAsText(file);
   }
+  let sortKey: string = $state('requestsPerSecond');
+  let sortOrder: 'asc' | 'desc' = $state('desc');
+
+  function toggleSort(key: string) {
+    if (sortKey === key) {
+      sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortKey = key;
+      sortOrder = 'desc';
+    }
+  }
+
+  function getSortedCompetitors(testType: string) {
+    if (!reportData) return [];
+
+    return [...competitors].sort((a, b) => {
+      let valA: any, valB: any;
+
+      if (sortKey === 'name') {
+        valA = a;
+        valB = b;
+      } else {
+        valA = reportData.result[a][testType]?.[sortKey];
+        valB = reportData.result[b][testType]?.[sortKey];
+      }
+
+      if (valA === undefined || valA === null) return 1;
+      if (valB === undefined || valB === null) return -1;
+
+      let modifier = sortOrder === 'asc' ? 1 : -1;
+      if (typeof valA === 'string') {
+          return valA.localeCompare(valB) * modifier;
+      }
+      return (valA - valB) * modifier;
+    });
+  }
 </script>
 
 <main>
@@ -220,20 +256,31 @@
 
       <div class="tables-container">
          {#each testTypes as testType}
+           {@const sortedComps = getSortedCompetitors(testType)}
            <div class="table-card glass-card">
               <h3>{testType} - Detailed Metrics</h3>
               <div class="table-responsive">
                 <table>
                   <thead>
                     <tr>
-                      <th>Competitor</th>
+                      <th onclick={() => toggleSort('name')} class="sortable">
+                        Competitor
+                        {#if sortKey === 'name'}
+                          <span class="sort-icon">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                        {/if}
+                      </th>
                       {#each metricsList as metric}
-                        <th>{metric.label}</th>
+                        <th onclick={() => toggleSort(metric.key)} class="sortable">
+                          {metric.label}
+                          {#if sortKey === metric.key}
+                            <span class="sort-icon">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                          {/if}
+                        </th>
                       {/each}
                     </tr>
                   </thead>
                   <tbody>
-                    {#each competitors as comp}
+                    {#each sortedComps as comp}
                       {#if reportData.result[comp][testType]}
                         <tr>
                           <td class="comp-name">{comp}</td>
@@ -362,7 +409,7 @@
 
   .summary-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(208px, 1fr));
     gap: 1.5rem;
   }
 
@@ -435,12 +482,23 @@
     border-bottom: 1px solid rgba(255,255,255,0.05);
   }
 
-  th {
-    color: var(--text-secondary);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-size: 0.75rem;
+  th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s, background-color 0.2s;
+    position: relative;
+  }
+
+  th.sortable:hover {
+    color: var(--accent-primary);
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+
+  .sort-icon {
+    display: inline-block;
+    margin-left: 4px;
+    color: var(--accent-primary);
+    font-weight: bold;
   }
 
   tbody tr {
