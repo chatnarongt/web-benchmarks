@@ -26,11 +26,13 @@ competitors:
   - name: dotnet-core-mssql
     database: mssql
     env:
+      DATABASE_URL: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=50;"
       ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=50;"
 
   - name: dotnet-minimal-apis-mssql
     database: mssql
     env:
+      DATABASE_URL: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=50;"
       ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=50;"
 
   - name: go-with-gin
