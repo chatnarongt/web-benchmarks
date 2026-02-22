@@ -23,16 +23,7 @@
   let testTypes = $derived(allTestTypes.filter((t: string) => selectedTestTypes.includes(t)));
 
   const chartColors = [
-    'rgba(56, 189, 248, 0.8)',   // accent-primary
-    'rgba(129, 140, 248, 0.8)',  // accent-secondary
-    'rgba(52, 211, 153, 0.8)',   // green
-    'rgba(251, 191, 36, 0.8)',   // yellow
-    'rgba(248, 113, 113, 0.8)',  // red
-    'rgba(192, 132, 252, 0.8)',  // purple
-    'rgba(236, 72, 153, 0.8)',   // pink
-    'rgba(20, 184, 166, 0.8)',   // teal
-    'rgba(249, 115, 22, 0.8)',   // orange
-    'rgba(107, 114, 128, 0.8)',  // gray
+    'rgba(56, 189, 248, 0.85)', // accent-primary (sky-400)
   ];
 
   const getCompColor = (comp: string) => {
@@ -491,7 +482,9 @@
                       {#if reportData.result[comp][testType]}
                         {@const row = reportData.result[comp][testType]}
                         <TableBodyRow class="text-slate-200 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
-                          <TableBodyCell class="font-medium text-primary-600 dark:text-primary-400">{comp}</TableBodyCell>
+                          <TableBodyCell class="font-medium" style="color: {getCompColor(comp)};">
+                            {comp}
+                          </TableBodyCell>
                           {#each tableMetrics as metric}
                             <TableBodyCell>
                               {#if metric.isResource}
