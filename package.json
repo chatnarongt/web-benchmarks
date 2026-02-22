@@ -1,6 +1,7 @@
 {
   "name": "web-benchmarks",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "start:viewer": "vite preview",

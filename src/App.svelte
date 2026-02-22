@@ -14,7 +14,7 @@
   let loading: boolean = $state(true);
 
   // Derived state for charts and tables
-  let allCompetitors = $derived(reportData ? Object.keys(reportData.result).sort() : []);
+  let allCompetitors = $derived(reportData ? Object.keys(reportData.result).filter(c => !reportData.result[c].error).sort() : []);
   let selectedCompetitors = $state<string[]>([]);
   let competitors = $derived(allCompetitors.filter(c => selectedCompetitors.includes(c)));
 
@@ -170,7 +170,7 @@
         const data = await reportModules[path]();
         reportData = data;
         initCols(reportData?.configs?.test?.types || []);
-        selectedCompetitors = Object.keys(reportData.result).sort().slice(0, 10);
+        selectedCompetitors = Object.keys(reportData.result).filter(c => !reportData.result[c].error).sort().slice(0, 10);
         selectedTestTypes = [...(reportData?.configs?.test?.types || [])];
       } catch (err) {
         console.error("Failed to load report data", err);
@@ -201,7 +201,7 @@
         const json = JSON.parse(e.target?.result as string);
         reportData = json;
         initCols(reportData?.configs?.test?.types || []);
-        selectedCompetitors = Object.keys(reportData.result).sort().slice(0, 10);
+        selectedCompetitors = Object.keys(reportData.result).filter(c => !reportData.result[c].error).sort().slice(0, 10);
         selectedTestTypes = [...(reportData?.configs?.test?.types || [])];
         selectedReportName = file.name;
 
