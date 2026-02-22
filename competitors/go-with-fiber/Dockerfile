@@ -1,21 +1,25 @@
+# Build stage
 FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
-# Install build dependencies
-RUN apk add --no-cache git
-
+# Install dependencies first for better caching
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-# Build native binary without CGO
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o benchmark .
 
+# Build the binary
+RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+
+# Run stage
 FROM alpine:latest
 
 WORKDIR /app
-COPY --from=builder /app/benchmark .
+
+# Copy the binary from builder
+COPY --from=builder /app/main .
 
 EXPOSE 3000
-CMD ["./benchmark"]
+
+CMD ["./main"]
