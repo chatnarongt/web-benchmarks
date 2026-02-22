@@ -47,7 +47,7 @@ competitors:
       DATABASE_URL: postgres://postgres:benchmark@postgres-service:5432/benchmark?sslmode=disable
       MAX_DB_CONNECTIONS: 50
 
-test: # With all default settings 1 test will take about 7 minutes, 1 competitor will take about 42 minutes
+test: # With all default settings 1 test will take about 8 minutes, 1 competitor will take about 48 minutes
   types:
     - plaintext
     - json
