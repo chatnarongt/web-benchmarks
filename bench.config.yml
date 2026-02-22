@@ -64,10 +64,10 @@ test:
 resources: # Resources for the competitors
   replicas: 1
   requests:
-    cpu: "1"
+    cpu: "0.5"
     memory: "512Mi"
   limits:
-    cpu: "1"
+    cpu: "0.5"
     memory: "512Mi"
 
 databaseResources: # Resources for the database
