@@ -211,11 +211,11 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       await $`kubectl delete pod k6-test-${competitor}-${sanitizedTestType} --ignore-not-found`.quiet();
 
       // Start tracking peak metrics in the background
-      let peakCpu = idleMetrics.cpu;
-      let peakMemory = idleMetrics.memory;
-      let peakDbCpu = idleDbMetrics.cpu;
-      let peakDbMemory = idleDbMetrics.memory;
-      let peakConnections = idleConnections;
+      let peakCpu = 0;
+      let peakMemory = 0;
+      let peakDbCpu = 0;
+      let peakDbMemory = 0;
+      let peakConnections = 0;
       let testRunning = true;
 
       const metricInterval = setInterval(async () => {

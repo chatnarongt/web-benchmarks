@@ -1,7 +1,10 @@
 /// <reference types="bun-types" />
 import { $ } from "bun";
 
-// Parses `kubectl top pod` output into cpu (millicores) and memory (MB)
+// Parses `kubectl top pod` output into cpu (millicores) and memory (MiB)
+// kubectl top can return:
+//   CPU  as "500m" (millicores) or "1" / "2" (whole cores)
+//   RAM  as "128Mi" (MiB) or "1Gi" (GiB)
 export async function getPodMetrics(label: string): Promise<{ cpu: number, memory: number }> {
     try {
         const topOutput = await $`kubectl top pod -l app=${label} --no-headers`.text();
@@ -11,11 +14,26 @@ export async function getPodMetrics(label: string): Promise<{ cpu: number, memor
             if (parts.length >= 3) {
                 const cpuStr = parts[1];
                 const memStr = parts[2];
+
                 let cpu = 0;
-                if (cpuStr.endsWith('m')) cpu = parseInt(cpuStr.substring(0, cpuStr.length - 1));
+                if (cpuStr.endsWith('m')) {
+                    // e.g. "500m" → 500 millicores
+                    cpu = parseInt(cpuStr.substring(0, cpuStr.length - 1));
+                } else {
+                    // e.g. "1" or "2" → whole cores → convert to millicores
+                    const cores = parseFloat(cpuStr);
+                    if (!isNaN(cores)) cpu = Math.round(cores * 1000);
+                }
 
                 let memory = 0;
-                if (memStr.endsWith('Mi')) memory = parseInt(memStr.substring(0, memStr.length - 2));
+                if (memStr.endsWith('Mi')) {
+                    memory = parseInt(memStr.substring(0, memStr.length - 2));
+                } else if (memStr.endsWith('Gi')) {
+                    memory = Math.round(parseFloat(memStr.substring(0, memStr.length - 2)) * 1024);
+                } else if (memStr.endsWith('Ki')) {
+                    memory = Math.round(parseInt(memStr.substring(0, memStr.length - 2)) / 1024);
+                }
+
                 return { cpu, memory };
             }
         }

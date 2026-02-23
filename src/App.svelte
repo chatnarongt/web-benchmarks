@@ -80,29 +80,29 @@
   const metricsList = [
     { id: 'requests', key: 'totalRequests', label: 'Requests' },
     { id: 'reqPerSec', key: 'requestsPerSecond', label: 'Req/Sec' },
-    { id: 'avgLatency', key: 'latencyAverageMs', label: 'Avg Latency', format: (v: number) => v.toFixed(2) + 'ms' },
-    { id: 'maxLatency', key: 'latencyMaxMs', label: 'Max Latency', format: (v: number) => v.toFixed(2) + 'ms' },
+    { id: 'avgLatency', key: 'latencyAverageMs', label: 'Avg Latency', format: (v: number) => v.toFixed(1) + 'ms' },
+    { id: 'maxLatency', key: 'latencyMaxMs', label: 'Max Latency', format: (v: number) => v.toFixed(1) + 'ms' },
     { id: 'errors', key: 'errorCount', label: 'Errors', isResource: true,
-      pct: (r: any) => `${(r.errorPercent || 0).toFixed(2)}%`, val: (r: any) => `${r.errorCount || 0}`
+      pct: (r: any) => `${(r.errorPercent || 0).toFixed(1)}%`, val: (r: any) => `${r.errorCount || 0}`
     },
     { id: 'appCpu', key: 'cpuUsagePeakPercent', label: 'App CPU (Idl/Max)', isComboResource: true,
       idleKey: 'cpuUsageIdlePercent', peakKey: 'cpuUsagePeakPercent',
-      idlePctOut: (r: any) => `${(r.cpuUsageIdlePercent || 0).toFixed(1)}`, peakPctOut: (r: any) => `${(r.cpuUsagePeakPercent || 0).toFixed(1)}%`,
+      idlePctOut: (r: any) => `${Math.min(r.cpuUsageIdlePercent || 0, 100).toFixed(1)}`, peakPctOut: (r: any) => `${Math.min(r.cpuUsagePeakPercent || 0, 100).toFixed(1)}%`,
       idleValOut: (r: any) => `${r.cpuUsageIdle || 0}`, peakValOut: (r: any) => `${r.cpuUsagePeak || 0}m`
     },
     { id: 'appRam', key: 'memUsagePeakPercent', label: 'App RAM (Idl/Max)', isComboResource: true,
       idleKey: 'memUsageIdlePercent', peakKey: 'memUsagePeakPercent',
-      idlePctOut: (r: any) => `${(r.memUsageIdlePercent || 0).toFixed(1)}`, peakPctOut: (r: any) => `${(r.memUsagePeakPercent || 0).toFixed(1)}%`,
+      idlePctOut: (r: any) => `${Math.min(r.memUsageIdlePercent || 0, 100).toFixed(1)}`, peakPctOut: (r: any) => `${Math.min(r.memUsagePeakPercent || 0, 100).toFixed(1)}%`,
       idleValOut: (r: any) => `${r.memUsageIdle || 0}`, peakValOut: (r: any) => `${r.memUsagePeak || 0}MB`
     },
     { id: 'dbCpu', key: 'dbCpuUsagePeakPercent', label: 'DB CPU (Idl/Max)', isComboResource: true,
       idleKey: 'dbCpuUsageIdlePercent', peakKey: 'dbCpuUsagePeakPercent',
-      idlePctOut: (r: any) => `${(r.dbCpuUsageIdlePercent || 0).toFixed(1)}`, peakPctOut: (r: any) => `${(r.dbCpuUsagePeakPercent || 0).toFixed(1)}%`,
+      idlePctOut: (r: any) => `${Math.min(r.dbCpuUsageIdlePercent || 0, 100).toFixed(1)}`, peakPctOut: (r: any) => `${Math.min(r.dbCpuUsagePeakPercent || 0, 100).toFixed(1)}%`,
       idleValOut: (r: any) => `${r.dbCpuUsageIdle || 0}`, peakValOut: (r: any) => `${r.dbCpuUsagePeak || 0}m`
     },
     { id: 'dbRam', key: 'dbMemUsagePeakPercent', label: 'DB RAM (Idl/Max)', isComboResource: true,
       idleKey: 'dbMemUsageIdlePercent', peakKey: 'dbMemUsagePeakPercent',
-      idlePctOut: (r: any) => `${(r.dbMemUsageIdlePercent || 0).toFixed(1)}`, peakPctOut: (r: any) => `${(r.dbMemUsagePeakPercent || 0).toFixed(1)}%`,
+      idlePctOut: (r: any) => `${Math.min(r.dbMemUsageIdlePercent || 0, 100).toFixed(1)}`, peakPctOut: (r: any) => `${Math.min(r.dbMemUsagePeakPercent || 0, 100).toFixed(1)}%`,
       idleValOut: (r: any) => `${r.dbMemUsageIdle || 0}`, peakValOut: (r: any) => `${r.dbMemUsagePeak || 0}MB`
     },
     { id: 'dbConns', key: 'dbConnectionCountPeak', label: 'DB Conns (Idl/Max)', format: (v: number, r: any) => `${r.dbConnectionCountIdle || 0} / ${v || 0}` }

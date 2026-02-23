@@ -93,7 +93,23 @@
           },
           y: {
             grid: { display: false },
-            ticks: { display: !hideYAxisLabels, color: '#94a3b8', font: { family: 'Inter' } }
+            ticks: { display: !hideYAxisLabels, color: '#94a3b8', font: { family: 'Inter' } },
+            afterFit(scale: any) {
+              if (!hideYAxisLabels && customLabels?.length) {
+                // Measure each label with the canvas API so the y-axis always
+                // reserves enough space, even before custom fonts are cached.
+                const ctx = scale.chart.ctx;
+                ctx.save();
+                ctx.font = '12px Inter, sans-serif';
+                const maxWidth = customLabels.reduce((max: number, label: string) => {
+                  const w = ctx.measureText(String(label)).width;
+                  return w > max ? w : max;
+                }, 0);
+                ctx.restore();
+                // Add 12px right-side gap between label and bar
+                scale.width = Math.max(scale.width, Math.ceil(maxWidth) + 12);
+              }
+            }
           }
         }
       }
