@@ -70,11 +70,19 @@ metadata:
   name: ${configMapName}
 data:
   init.sql: |
+    -- Stable read/update dataset
     CREATE TABLE World (
       id SERIAL PRIMARY KEY,
       randomNumber INTEGER NOT NULL
     );
     INSERT INTO World (randomNumber) SELECT floor(random() * 10000 + 1) FROM generate_series(1, 10000);
+
+    -- Scratch table for create/delete benchmarks
+    CREATE TABLE Temp (
+      id SERIAL PRIMARY KEY,
+      randomNumber INTEGER NOT NULL
+    );
+    INSERT INTO Temp (randomNumber) SELECT floor(random() * 10000 + 1) FROM generate_series(1, 10000);
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -150,18 +158,33 @@ data:
     END
     GO
     USE benchmark;
+    -- Stable read/update dataset
     IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='World' and xtype='U')
     BEGIN
         CREATE TABLE World (
             id INT PRIMARY KEY IDENTITY(1,1),
             randomNumber INT NOT NULL
         );
-        -- Insert 10,000 rows
         DECLARE @cnt INT = 0;
         WHILE @cnt < 10000
         BEGIN
             INSERT INTO World (randomNumber) VALUES (ABS(CHECKSUM(NEWID())) % 10000 + 1);
             SET @cnt = @cnt + 1;
+        END
+    END
+    GO
+    -- Scratch table for create/delete benchmarks
+    IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Temp' and xtype='U')
+    BEGIN
+        CREATE TABLE Temp (
+            id INT PRIMARY KEY IDENTITY(1,1),
+            randomNumber INT NOT NULL
+        );
+        DECLARE @cnt2 INT = 0;
+        WHILE @cnt2 < 10000
+        BEGIN
+            INSERT INTO Temp (randomNumber) VALUES (ABS(CHECKSUM(NEWID())) % 10000 + 1);
+            SET @cnt2 = @cnt2 + 1;
         END
     END
     GO

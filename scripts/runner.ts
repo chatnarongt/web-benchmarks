@@ -154,14 +154,22 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       let endpoint = '/plaintext';
       if (testType === 'json') {
         endpoint = '/json';
-      } else if (testType === 'database/single-read') {
-        endpoint = '/database/single-read';
-      } else if (testType === 'database/multiple-read') {
-        endpoint = '/database/multiple-read';
-      } else if (testType === 'database/single-write') {
-        endpoint = '/database/single-write';
-      } else if (testType === 'database/multiple-write') {
-        endpoint = '/database/multiple-write';
+      } else if (testType === 'single-read') {
+        endpoint = '/single-read';
+      } else if (testType === 'multiple-read') {
+        endpoint = '/multiple-read';
+      } else if (testType === 'single-create') {
+        endpoint = '/single-create';
+      } else if (testType === 'multiple-create') {
+        endpoint = '/multiple-create';
+      } else if (testType === 'single-update') {
+        endpoint = '/single-update';
+      } else if (testType === 'multiple-update') {
+        endpoint = '/multiple-update';
+      } else if (testType === 'single-delete') {
+        endpoint = '/single-delete';
+      } else if (testType === 'multiple-delete') {
+        endpoint = '/multiple-delete';
       }
       const targetUrl = `http://${competitor}-service${endpoint}`;
       const sanitizedTestType = testType.replace(/\//g, "-");

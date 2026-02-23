@@ -32,12 +32,26 @@
   };
 
   const testTypeLabel: Record<string, string> = {
-    plaintext: "Plaintext",
-    json: "JSON",
-    'database/single-read': 'Single Read',
-    'database/multiple-read': 'Multiple Reads',
-    'database/single-write': 'Single Write',
-    'database/multiple-write': 'Multiple Writes',
+    // Non-DB
+    plaintext:          'Plaintext',
+    json:               'JSON',
+    // Read
+    'single-read':      'Single Read',
+    'multiple-read':    'Multiple Read',
+    // Create
+    'single-create':    'Single Create',
+    'multiple-create':  'Multiple Create',
+    // Update
+    'single-update':    'Single Update',
+    'multiple-update':  'Multiple Update',
+    // Delete
+    'single-delete':    'Single Delete',
+    'multiple-delete':  'Multiple Delete',
+    // Legacy keys (for old reports)
+    'database/single-read':    'Single Read',
+    'database/multiple-read':  'Multiple Read',
+    'database/single-write':   'Single Write',
+    'database/multiple-write': 'Multiple Write',
   }
 
   function getReportLabel(filename: string) {
