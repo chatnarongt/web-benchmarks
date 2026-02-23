@@ -3,51 +3,51 @@ competitors:
     database: postgres
     env:
       DATABASE_URL: postgres://postgres:benchmark@postgres-service:5432/benchmark
-      MAX_DB_CONNECTIONS: 50
+      MAX_DB_CONNECTIONS: 100
 
   - name: node-with-elysia
     database: postgres
     env:
       DATABASE_URL: postgres://postgres:benchmark@postgres-service:5432/benchmark
-      MAX_DB_CONNECTIONS: 50
+      MAX_DB_CONNECTIONS: 100
 
   - name: dotnet-core
     database: postgres
     env:
-      DATABASE_URL: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=50;
-      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=50;
+      DATABASE_URL: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=100;
+      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=100;
 
   - name: dotnet-minimal-apis
     database: postgres
     env:
-      DATABASE_URL: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=50;
-      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=50;
+      DATABASE_URL: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=100;
+      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: Host=postgres-service;Database=benchmark;Username=postgres;Password=benchmark;Maximum Pool Size=100;
 
   - name: dotnet-core-mssql
     database: mssql
     env:
-      DATABASE_URL: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=50;"
-      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=50;"
+      DATABASE_URL: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=100;"
+      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=100;"
 
   - name: dotnet-minimal-apis-mssql
     database: mssql
     env:
-      DATABASE_URL: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=50;"
-      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=50;"
+      DATABASE_URL: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=100;"
+      ASPNETCORE_CONNECTIONSTRINGS__DEFAULTCONNECTION: "Server=mssql-service;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Max Pool Size=100;"
 
   - name: go-with-gin
     database: postgres
     env:
       DATABASE_URL: postgres://postgres:benchmark@postgres-service:5432/benchmark?sslmode=disable
-      MAX_DB_CONNECTIONS: 50
+      MAX_DB_CONNECTIONS: 100
 
   - name: go-with-fiber
     database: postgres
     env:
       DATABASE_URL: postgres://postgres:benchmark@postgres-service:5432/benchmark?sslmode=disable
-      MAX_DB_CONNECTIONS: 50
+      MAX_DB_CONNECTIONS: 100
 
-test: # With all default settings 1 test will take about 8 minutes, 1 competitor will take about 48 minutes
+test: # With all default settings 1 test will take about 5 minutes, 1 competitor will take about 30 minutes
   types:
     - plaintext
     - json
@@ -55,9 +55,9 @@ test: # With all default settings 1 test will take about 8 minutes, 1 competitor
     - database/multiple-read
     - database/single-write
     - database/multiple-write
-  concurrency: 1 # Number of concurrent competitors tested (1 = sequentially)
+  concurrency: 2 # Number of concurrent competitors tested (1 = sequentially)
   vus: 128 # total number of virtual users to use for the test
-  duration: 5m # Default: 5m, duration of the test for each type, e.g. 2s, 2m, 2h
+  duration: 2m # Default: 2m, duration of the test for each type, e.g. 2s, 2m, 2h
   warmupDuration: 30s # Default: 30s, duration of the warm-up test before the actual benchmark
   idleWaitDuration: 30s # Default: 30s, duration to wait after warmup before starting the actual test
   databaseSettleDuration: 30s # Default: 30s, duration to wait for database to settle after deployment
