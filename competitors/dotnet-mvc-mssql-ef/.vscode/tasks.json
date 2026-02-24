@@ -1,36 +1,105 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "Build Core",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/Core/Core.csproj"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "Scaffold Database (Benchmark)",
-            "command": "dotnet",
-            "type": "process",
-            "options": {
-                "cwd": "${workspaceFolder}/Core"
-            },
-            "args": [
-                "ef",
-                "dbcontext",
-                "scaffold",
-                "-f",
-                "-o",
-                "../Database/Benchmark",
-                "-n",
-                "Database",
-                "Name=BenchmarkDatabase",
-                "Microsoft.EntityFrameworkCore.SqlServer"
-            ],
-            "problemMatcher": "$msCompile"
-        }
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run (Watch Mode)",
+      "icon": {
+        "id": "play-circle",
+        "color": "terminal.ansiGreen"
+      },
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "run",
+        "--project",
+        "${workspaceFolder}/Core/Core.csproj"
+      ],
+      "isBackground": true,
+      "problemMatcher": [],
+    },
+    {
+      "label": "Format Code (CSharpier)",
+      "icon": {
+        "id": "paintcan",
+        "color": "terminal.ansiYellow"
+      },
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "csharpier",
+        "format",
+        "${workspaceFolder}",
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "close": true
+      }
+    },
+    {
+      "label": "Scaffold Database (Benchmark)",
+      "icon": {
+        "id": "database",
+        "color": "terminal.ansiBlue"
+      },
+      "dependsOn": [
+        "Scaffold Benchmark Database",
+        "Format Code (CSharpier)"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "Scaffold Benchmark Database",
+      "command": "dotnet",
+      "type": "process",
+      "options": {
+        "cwd": "${workspaceFolder}/Core"
+      },
+      "args": [
+        "ef",
+        "dbcontext",
+        "scaffold",
+        "-f",
+        "-o",
+        "../Database/Benchmark",
+        "-n",
+        "Database.Benchmark",
+        "Name=BenchmarkDatabase",
+        "Microsoft.EntityFrameworkCore.SqlServer",
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true,
+      },
+      "problemMatcher": [],
+      "hide": true
+    },
+    {
+      "label": "Build Core",
+      "command": "dotnet",
+      "type": "process",
+      "options": {
+        "cwd": "${workspaceFolder}/Core"
+      },
+      "args": [
+        "build",
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": "$msCompile",
+      "hide": true
+    }
+  ]
 }

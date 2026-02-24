@@ -22,12 +22,8 @@ public class Program
         });
 
         // Infrastructure — single DbContext instance, services share it
-        // builder.Services.AddSingleton<DatabaseContext>();
 
         // Services — each service opens and closes its own connection per call
-        var connectionString = builder.Configuration.GetConnectionString("BenchmarkDatabase");
-        Console.WriteLine("connectionString: " + connectionString);
-
 
         var app = builder.Build();
         if (app.Environment.IsDevelopment())

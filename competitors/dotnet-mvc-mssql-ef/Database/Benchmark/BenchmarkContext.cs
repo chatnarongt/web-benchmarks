@@ -2,23 +2,19 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace Database;
+namespace Database.Benchmark;
 
 public partial class BenchmarkContext : DbContext
 {
-    public BenchmarkContext()
-    {
-    }
+    public BenchmarkContext() { }
 
     public BenchmarkContext(DbContextOptions<BenchmarkContext> options)
-        : base(options)
-    {
-    }
+        : base(options) { }
 
     public virtual DbSet<World> Worlds { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Name=BenchmarkDatabase");
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
+        optionsBuilder.UseSqlServer("Name=BenchmarkDatabase");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
