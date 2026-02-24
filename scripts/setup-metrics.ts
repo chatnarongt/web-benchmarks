@@ -2,7 +2,7 @@
 import { $ } from "bun";
 
 export async function setupMetricsServer() {
-  console.log("📊 Setting up metrics-server...");
+  console.trace("📊 Setting up metrics-server...");
   try {
     // Deploy metrics server
     await $`kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml`.quiet();
@@ -10,7 +10,7 @@ export async function setupMetricsServer() {
     // Patch arguments to allow insecure TLS
     await $`kubectl patch deployment metrics-server -n kube-system -p '{"spec":{"template":{"spec":{"containers":[{"name":"metrics-server","args":["--cert-dir=/tmp","--secure-port=10250","--kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname","--kubelet-use-node-status-port","--metric-resolution=15s","--kubelet-insecure-tls"]}]}}}}'`.quiet();
 
-    console.log("⏳ Waiting for metrics-server to be ready...");
+    console.trace("⏳ Waiting for metrics-server to be ready...");
 
     // Wait for it to be ready
     let ready = false;
@@ -28,7 +28,7 @@ export async function setupMetricsServer() {
       await new Promise(r => setTimeout(r, 1000));
       attempts++;
     }
-    console.log("✅ metrics-server is running.");
+    console.trace("✅ metrics-server is running.");
   } catch (error) {
     console.error("⚠️ Failed to setup metrics-server:", error);
   }

@@ -53,16 +53,6 @@ Your application must implement the following endpoints:
    - Fetches the rows whose `id` values match `ids`, updates each row's `randomNumber` using the corresponding value from `r` (matched positionally).
    - Returns the updated JSON array of rows.
 
-#### Delete — `DELETE`
-
-9. **`DELETE /single-delete?id=[number]`**
-   - Deletes the row with the given `id` from the `Temp` table.
-   - Returns the deleted row as JSON: `{"id": 123, "randomNumber": 4567}`.
-
-10. **`DELETE /multiple-delete?ids=[id1,id2,id3...]`**
-    - Deletes the rows whose `id` values are provided in the comma-separated `ids` parameter from the `Temp` table.
-    - Returns the deleted JSON array of rows.
-
 ### Database Schema
 
 The provided database (PostgreSQL or MSSQL) will automatically be seeded with two tables:

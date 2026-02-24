@@ -6,23 +6,31 @@ import { parseK6Output, mergePodMetrics, parseTimeToSeconds, parseConfig, type B
 import { setupMetricsServer } from "./setup-metrics.ts";
 import { getPodMetrics, getDbConnectionCount } from "./metrics.ts";
 
-let currentLogMode: "verbose" | "summary" | "silent" = "verbose";
-const originalLog = console.log;
-const originalError = console.error;
-const originalWarn = console.warn;
+let currentLogMode: NonNullable<BenchmarkConfig['test']['logMode']> = "info";
 
-console.log = (...args: any[]) => {
+const originalLog = console.log;
+const originalWarn = console.warn;
+const originalError = console.error;
+
+console.trace = (...args: any[]) => {
+  // verbose only
   if (currentLogMode === "verbose") originalLog(...args);
 };
-console.error = (...args: any[]) => {
-  if (currentLogMode !== "silent") originalError(...args);
+console.info = (...args: any[]) => {
+  // verbose and info
+  if (["verbose", "info"].includes(currentLogMode)) originalLog(...args);
+};
+console.log = (...args: any[]) => {
+  // verbose, info, and summary
+  if (["verbose", "info", "summary"].includes(currentLogMode)) originalLog(...args);
 };
 console.warn = (...args: any[]) => {
+  // all except silent
   if (currentLogMode !== "silent") originalWarn(...args);
 };
-
-const logSummary = (...args: any[]) => {
-  if (currentLogMode !== "silent") originalLog(...args);
+console.error = (...args: any[]) => {
+  // silent only
+  if (currentLogMode === "silent") originalError(...args);
 };
 
 async function runCompetitor(competitorConfig: CompetitorConfig, config: BenchmarkConfig, finalReport: Record<string, any>) {
@@ -45,7 +53,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
 
     // 2. Deploy required database for this competitor
     if (dbType === "postgres") {
-      console.log(`[${competitor}] ☸️  Deploying PostgreSQL database (${dbServiceName})...`);
+      console.trace(`[${competitor}] ☸️  Deploying PostgreSQL database (${dbServiceName})...`);
       const pgManifest = generatePostgresManifest(config.databaseResources, dbSuffix);
       const pgManifestPath = `/tmp/postgres-manifest-${dbSuffix}.yml`;
       fs.writeFileSync(pgManifestPath, pgManifest);
@@ -54,15 +62,15 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       } else {
         await $`kubectl apply -f ${pgManifestPath}`.quiet();
       }
-      console.log(`[${competitor}] ⏳ Waiting for PostgreSQL to be ready...`);
+      console.trace(`[${competitor}] ⏳ Waiting for PostgreSQL to be ready...`);
       if (isVerbose) {
         await $`kubectl rollout status deployment/${dbDeploymentName} --timeout=120s`;
       } else {
         await $`kubectl rollout status deployment/${dbDeploymentName} --timeout=120s`.quiet();
       }
-      console.log(`[${competitor}] ✅ PostgreSQL ready.`);
+      console.info(`[${competitor}] ✅ PostgreSQL ready.`);
     } else if (dbType === "mssql") {
-      console.log(`[${competitor}] ☸️  Deploying MSSQL database (${dbServiceName})...`);
+      console.trace(`[${competitor}] ☸️  Deploying MSSQL database (${dbServiceName})...`);
       const mssqlManifest = generateMssqlManifest(config.databaseResources, dbSuffix);
       const mssqlManifestPath = `/tmp/mssql-manifest-${dbSuffix}.yml`;
       fs.writeFileSync(mssqlManifestPath, mssqlManifest);
@@ -71,25 +79,25 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       } else {
         await $`kubectl apply -f ${mssqlManifestPath}`.quiet();
       }
-      console.log(`[${competitor}] ⏳ Waiting for MSSQL to be ready...`);
+      console.trace(`[${competitor}] ⏳ Waiting for MSSQL to be ready...`);
       if (isVerbose) {
         await $`kubectl rollout status deployment/${dbDeploymentName} --timeout=300s`;
       } else {
         await $`kubectl rollout status deployment/${dbDeploymentName} --timeout=300s`.quiet();
       }
-      console.log(`[${competitor}] ✅ MSSQL ready.`);
+      console.info(`[${competitor}] ✅ MSSQL ready.`);
     }
 
     // Wait for the database to settle if one was deployed
     if (dbType) {
       const settleDurationStr = config.test.databaseSettleDuration || (dbType === "mssql" ? "30s" : "15s");
       const settleTimeMs = parseTimeToSeconds(settleDurationStr) * 1000;
-      console.log(`[${competitor}] ⏳ Waiting ${settleDurationStr} for database to settle...`);
+      console.trace(`[${competitor}] ⏳ Waiting ${settleDurationStr} for database to settle...`);
       await new Promise(resolve => setTimeout(resolve, settleTimeMs));
     }
 
     // 3. Build Docker Image
-    console.log(`[${competitor}] 🐳 Building Docker image...`);
+    console.trace(`[${competitor}] 🐳 Building Docker image...`);
     const buildArgs: string[] = [];
     if (competitorConfig.env) {
       for (const [key, value] of Object.entries(competitorConfig.env)) {
@@ -102,10 +110,10 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
     } else {
       await $`docker build ${buildArgs} -t ${competitor}:benchmark ./competitors/${competitor}`.quiet();
     }
-    console.log(`[${competitor}] ✅ Docker image built successfully.`);
+    console.info(`[${competitor}] ✅ Docker image built successfully.`);
 
     // 4 & 5. Generate and Apply Kubernetes Manifests
-    console.log(`\n[${competitor}] ☸️  Deploying to Kubernetes...`);
+    console.trace(`\n[${competitor}] ☸️  Deploying to Kubernetes...`);
 
     // Inject Database Host properly
     const env = { ...(competitorConfig.env || {}) };
@@ -136,7 +144,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
     } else {
       await $`kubectl apply -f ${manifestPath}`.quiet();
     }
-    console.log(`[${competitor}] ⏳ Waiting for deployment to be ready...`);
+    console.trace(`[${competitor}] ⏳ Waiting for deployment to be ready...`);
 
     // Wait for rollout
     if (isVerbose) {
@@ -144,7 +152,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
     } else {
       await $`kubectl rollout status deployment/${competitor}-deployment --timeout=300s`.quiet();
     }
-    console.log(`[${competitor}] ✅ Deployment ready.`);
+    console.info(`[${competitor}] ✅ Deployment ready.`);
 
     // Wait a few seconds for load balancer/service routing to settle
     await new Promise(resolve => setTimeout(resolve, 5000));
@@ -166,10 +174,6 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
         endpoint = '/single-update';
       } else if (testType === 'multiple-update') {
         endpoint = '/multiple-update';
-      } else if (testType === 'single-delete') {
-        endpoint = '/single-delete';
-      } else if (testType === 'multiple-delete') {
-        endpoint = '/multiple-delete';
       }
       const targetUrl = `http://${competitor}-service${endpoint}`;
       const sanitizedTestType = testType.replace(/\//g, "-");
@@ -179,7 +183,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       const warmupSecs = parseTimeToSeconds(warmupDuration);
       const scriptContent = fs.readFileSync("./scripts/k6-test.ts", "utf8");
       if (warmupSecs > 0) {
-        console.log(`\n[${competitor}] 🔥 Warming up for '${testType}' (${warmupDuration})...`);
+        console.info(`\n[${competitor}] 🔥 Warming up for '${testType}' (${warmupDuration})...`);
         try {
           await $`echo ${scriptContent} | kubectl run k6-warmup-${competitor}-${sanitizedTestType} --rm -i \
                         --image=grafana/k6 \
@@ -189,31 +193,31 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
           console.warn(`[${competitor}] ⚠️ Warmup failed (ignoring):`, e);
         }
       } else {
-        console.log(`\n[${competitor}] ⏩ Skipping warmup for '${testType}' (duration is ${warmupDuration})`);
+        console.trace(`\n[${competitor}] ⏩ Skipping warmup for '${testType}' (duration is ${warmupDuration})`);
       }
 
       const idleWaitDurationStr = config.test.idleWaitDuration || "15s";
       const idleWaitMs = parseTimeToSeconds(idleWaitDurationStr) * 1000;
       if (idleWaitMs > 0) {
-        console.log(`[${competitor}] ⏳ Waiting ${idleWaitDurationStr} for resources to settle before test...`);
+        console.trace(`[${competitor}] ⏳ Waiting ${idleWaitDurationStr} for resources to settle before test...`);
         await new Promise(resolve => setTimeout(resolve, idleWaitMs));
       } else {
-        console.log(`[${competitor}] ⏩ Skipping idle wait for '${testType}' (duration is ${idleWaitDurationStr})`);
+        console.trace(`[${competitor}] ⏩ Skipping idle wait for '${testType}' (duration is ${idleWaitDurationStr})`);
       }
 
       // Capture Idle metrics before test
       const idleMetrics = await getPodMetrics(competitor);
       const idleDbMetrics = dbType ? await getPodMetrics(dbAppLabel) : { cpu: 0, memory: 0 };
       const idleConnections = dbType ? await getDbConnectionCount(dbDeploymentName, dbType) : 0;
-      console.log(`[${competitor}] 💤 Idle Metrics -> App CPU: ${idleMetrics.cpu}m, App RAM: ${idleMetrics.memory}Mi | DB CPU: ${idleDbMetrics.cpu}m, DB RAM: ${idleDbMetrics.memory}Mi, Connections: ${idleConnections}`);
+      console.trace(`[${competitor}] 💤 Idle Metrics -> App CPU: ${idleMetrics.cpu}m, App RAM: ${idleMetrics.memory}Mi | DB CPU: ${idleDbMetrics.cpu}m, DB RAM: ${idleDbMetrics.memory}Mi, Connections: ${idleConnections}`);
 
       // --- ACTUAL TEST PHASE ---
-      console.log(`[${competitor}] 🧨 Running load test '${testType}' with 'k6' for ${config.test.duration}...`);
+      console.info(`[${competitor}] 🧨 Running load test '${testType}' with 'k6' for ${config.test.duration}...`);
 
       // Run k6 and capture output. We run it as a standalone Pod passing script via stdin.
       const testDurationSecs = parseTimeToSeconds(config.test.duration);
       const k6Command = `k6 run --vus ${config.test.vus} --duration ${testDurationSecs}s -e TARGET_URL=${targetUrl} -e TEST_TYPE=${testType}`;
-      console.log(`[${competitor}] Executing: ${k6Command} from inside cluster...`);
+      console.info(`[${competitor}] Executing: ${k6Command} from inside cluster...`);
 
       // Ensure any leftover pod is deleted
       await $`kubectl delete pod k6-test-${competitor}-${sanitizedTestType} --ignore-not-found`.quiet();
@@ -248,7 +252,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       testRunning = false;
       clearInterval(metricInterval);
 
-      console.log(`[${competitor}] 📊 Load test '${testType}' complete.`);
+      console.info(`[${competitor}] 📊 Load test '${testType}' complete.`);
       let metrics = parseK6Output(testOutput);
       metrics = mergePodMetrics(
         metrics,
@@ -262,19 +266,19 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       );
 
       finalReport[competitor][testType] = metrics;
-      console.log(`[${competitor}] 📈 Metrics (${testType}):`, metrics);
+      console.info(`[${competitor}] 📈 Metrics (${testType}):`, metrics);
 
       // Wait 5 seconds between separate tests for DNS/sockets to flush
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
 
-    logSummary(`[${competitor}] ✅ All tests complete.`);
+    console.log(`[${competitor}] ✅ All tests complete.`);
   } catch (error) {
     console.error(`[${competitor}] ❌ Benchmark failed:`, error);
     finalReport[competitor].error = String(error);
   } finally {
     // 6. Cleanup competitor and database
-    console.log(`[${competitor}] 🧹 Cleaning up resources...`);
+    console.trace(`[${competitor}] 🧹 Cleaning up resources...`);
     try {
       const dbSuffix = suffix;
       // Cleanup competitor
@@ -334,13 +338,13 @@ async function main() {
     currentLogMode = config.test.logMode;
   }
 
-  logSummary(`🚀 Starting Benchmark Orchestration Pipeline at ${startTime}`);
+  console.log(`🚀 Starting Benchmark Orchestration Pipeline at ${startTime}`);
 
   // Setup metrics server
   await setupMetricsServer();
 
-  logSummary(`Loaded config for ${config.competitors.length} competitors. Test duration: ${config.test.duration}/type.`);
-  logSummary(`Concurrency level: ${config.test.concurrency}`);
+  console.log(`Loaded config for ${config.competitors.length} competitors. Test duration: ${config.test.duration}/type.`);
+  console.log(`Concurrency level: ${config.test.concurrency}`);
 
   const finalReport: Record<string, any> = {};
 
@@ -369,13 +373,14 @@ async function main() {
   await Promise.all(activePromises);
 
   // 7. Output Report
-  logSummary(`\n======================================================`);
+  console.trace("");
+  console.log(`======================================================\n`);
   const reportDir = "reports";
   if (!fs.existsSync(reportDir)) {
     fs.mkdirSync(reportDir);
   }
   const reportPath = `${reportDir}/${startTime.replace(/:/g, '-')}.json`;
-  logSummary(`🎉 All benchmarks complete. Writing ${reportPath}`);
+  console.log(`🎉 All benchmarks complete. Writing ${reportPath}`);
   const endTime = new Date().toISOString();
   const exportReport = {
     startTime,

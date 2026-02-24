@@ -57,15 +57,6 @@ export default function (): void {
         res = http.put(url, body, { headers: JSON_HEADERS });
     }
 
-    // ── DELETE (DELETE + query params) ────────────────────────────────────────
-    else if (TEST_TYPE === 'single-delete') {
-        res = http.del(`${url}?id=${rand()}`);
-    }
-    else if (TEST_TYPE === 'multiple-delete') {
-        const ids = uniqueIds(20).join(',');
-        res = http.del(`${url}?ids=${ids}`);
-    }
-
     if (res) {
         check(res, {
             'is status 2xx': (r: any) => r.status >= 200 && r.status < 300,

@@ -18,7 +18,7 @@ export interface BenchmarkConfig {
     warmupDuration: string;
     idleWaitDuration: string;
     databaseSettleDuration: string;
-    logMode?: "verbose" | "summary" | "silent";
+    logMode?: "verbose" | 'info' | "summary" | "silent";
   };
   resources: {
     replicas: number;

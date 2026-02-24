@@ -4,7 +4,8 @@ export function generateK8sManifest(name: string, resources: any, envVars?: Reco
   if (envVars && Object.keys(envVars).length > 0) {
     envString = "\n        env:";
     for (const [key, value] of Object.entries(envVars)) {
-      envString += `\n        - name: ${key}\n          value: "${value}"`;
+      const escapedValue = value.replace(/"/g, '\\"');
+      envString += `\n        - name: ${key}\n          value: "${escapedValue}"`;
     }
   }
 

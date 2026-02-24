@@ -1,0 +1,60 @@
+{
+  "startTime": "2026-02-24T04:45:20.947Z",
+  "endTime": "2026-02-24T04:45:54.515Z",
+  "configs": {
+    "competitors": [
+      {
+        "name": "dotnet-mvc-mssql-ef",
+        "database": "mssql",
+        "env": {
+          "DATABASE_URL": "Server=mssql-service; Database=benchmark; User Id=sa; Password=Benchmark123!; Max Pool Size=100;\" Min Pool Size=0; Connection Lifetime=30; Connection Timeout=30; Encrypt=False; TrustServerCertificate=True;"
+        }
+      }
+    ],
+    "test": {
+      "types": [
+        "single-read",
+        "multiple-read",
+        "single-create",
+        "multiple-create",
+        "single-update",
+        "multiple-update",
+        "single-delete",
+        "multiple-delete"
+      ],
+      "concurrency": 1,
+      "vus": 128,
+      "duration": "2m",
+      "warmupDuration": "30s",
+      "idleWaitDuration": "30s",
+      "databaseSettleDuration": "30s",
+      "logMode": "verbose"
+    },
+    "resources": {
+      "replicas": 1,
+      "requests": {
+        "cpu": "1",
+        "memory": "512Mi"
+      },
+      "limits": {
+        "cpu": "1",
+        "memory": "512Mi"
+      }
+    },
+    "databaseResources": {
+      "requests": {
+        "cpu": "4",
+        "memory": "4Gi"
+      },
+      "limits": {
+        "cpu": "4",
+        "memory": "4Gi"
+      }
+    }
+  },
+  "result": {
+    "dotnet-mvc-mssql-ef": {
+      "error": "ShellError: Failed with exit code 1"
+    }
+  }
+}

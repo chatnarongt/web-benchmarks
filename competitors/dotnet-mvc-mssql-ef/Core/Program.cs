@@ -24,9 +24,10 @@ public class Program
         });
 
         // Infrastructure — single DbContext instance, services share it
-        builder.Services.AddSingleton<DatabaseContext>();
+        // builder.Services.AddSingleton<DatabaseContext>();
 
         // Services — each service opens and closes its own connection per call
+        builder.Services.AddScoped<DatabaseContext>();
         builder.Services.AddScoped<IGetPlaintextService, GetPlaintextService>();
         builder.Services.AddScoped<IGetJsonService, GetJsonService>();
         builder.Services.AddScoped<ISingleReadService, SingleReadService>();

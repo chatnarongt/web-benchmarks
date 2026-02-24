@@ -28,7 +28,7 @@
   });
 
   let chartHeight = $derived(
-    Math.max(400, (customLabels?.length || 0) * visibleCount * 24 + 100),
+    Math.max(200, (customLabels?.length || 0) * visibleCount * 18 + 60),
   );
 
   function initChart() {
@@ -55,13 +55,18 @@
             display: true,
             text: title,
             color: "#f8fafc",
-            font: { size: 16, family: "Inter", weight: 500 },
-            padding: { bottom: 20 },
+            font: { size: 13, family: "Inter", weight: 500 },
+            padding: { bottom: 8 },
           },
           legend: {
             display: datasets && datasets.length > 1,
             position: "bottom",
-            labels: { color: "#94a3b8", font: { family: "Inter" } },
+            labels: {
+              color: "#94a3b8",
+              font: { family: "Inter", size: 11 },
+              boxWidth: 12,
+              padding: 8,
+            },
             onClick: function (_, legendItem, legend) {
               const index = legendItem.datasetIndex;
               if (index === undefined) return;
@@ -85,14 +90,14 @@
             bodyColor: "#e2e8f0",
             borderColor: "rgba(255,255,255,0.1)",
             borderWidth: 1,
-            padding: 10,
+            padding: 8,
           },
         },
         scales: {
           x: {
             beginAtZero: true,
             grid: { color: "rgba(255,255,255,0.05)" },
-            ticks: { color: "#94a3b8", font: { family: "Inter" } },
+            ticks: { color: "#94a3b8", font: { family: "Inter", size: 11 } },
             title: {
               display: !!yAxisLabel,
               text: yAxisLabel,
@@ -104,7 +109,7 @@
             ticks: {
               display: !hideYAxisLabels,
               color: "#94a3b8",
-              font: { family: "Inter" },
+              font: { family: "Inter", size: 11 },
             },
             afterFit(scale: any) {
               if (!hideYAxisLabels && customLabels?.length) {

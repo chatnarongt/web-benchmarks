@@ -73,9 +73,6 @@
     // Update
     "single-update": "Single Update",
     "multiple-update": "Multiple Update",
-    // Delete
-    "single-delete": "Single Delete",
-    "multiple-delete": "Multiple Delete",
     // Legacy keys (for old reports)
     "database/single-read": "Single Read",
     "database/multiple-read": "Multiple Read",
@@ -115,8 +112,8 @@
   }
 
   $effect(() => {
-    if (selectedCompetitors.length > 10) {
-      selectedCompetitors = selectedCompetitors.slice(0, 10);
+    if (selectedCompetitors.length > 20) {
+      selectedCompetitors = selectedCompetitors.slice(0, 20);
     }
   });
 
@@ -416,15 +413,15 @@
 </script>
 
 <main
-  class="container mx-auto p-4 md:p-8 space-y-8 text-primary-900 dark:text-gray-100 min-h-screen"
+  class="container mx-auto p-3 md:p-4 space-y-4 text-primary-900 dark:text-gray-100 min-h-screen"
 >
   <Card
     size="xl"
-    class="w-full max-w-none flex flex-col md:flex-row justify-between items-center gap-4 glass-panel p-6 rounded-2xl border-0"
+    class="w-full max-w-none flex flex-col md:flex-row justify-between items-center gap-3 glass-panel p-3 px-5 rounded-2xl border-0"
   >
     <div class="flex-1">
       <h1
-        class="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text text-transparent"
+        class="text-lg font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text text-transparent"
       >
         Web Benchmarks Viewer
       </h1>
@@ -479,69 +476,69 @@
       <p class="text-gray-500 dark:text-gray-400">Loading report data...</p>
     </div>
   {:else if reportData}
-    <div class="space-y-8">
+    <div class="space-y-4">
       <Card
         size="xl"
-        class="w-full max-w-none glass-panel rounded-2xl border-0 p-6 relative z-20"
+        class="w-full max-w-none glass-panel rounded-2xl border-0 p-4 relative z-20"
       >
         <div
-          class="flex flex-col lg:flex-row justify-between lg:items-center gap-6"
+          class="flex flex-col lg:flex-row justify-between lg:items-center gap-3"
         >
           <div>
             <h2
-              class="text-xl font-semibold mb-1 text-gray-900 dark:text-white"
+              class="text-sm font-semibold mb-0.5 text-gray-900 dark:text-white"
             >
               Benchmark Configuration
             </h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
+            <p class="text-xs text-gray-500 dark:text-gray-400">
               {new Date(reportData.startTime).toLocaleString("th")} &mdash; {new Date(
                 reportData.endTime,
               ).toLocaleTimeString("th")}
               {testDurationFormatted}
             </p>
           </div>
-          <div class="flex flex-wrap gap-8">
-            <div class="flex flex-col gap-1">
+          <div class="flex flex-wrap gap-4">
+            <div class="flex flex-col gap-0.5">
               <span
                 class="text-xs font-semibold text-gray-400 uppercase tracking-wider"
                 >Duration</span
               >
               <span
-                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+                class="text-sm font-semibold text-gray-900 dark:text-gray-100"
                 >{reportData.configs?.test?.duration || "N/A"}</span
               >
             </div>
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-0.5">
               <span
                 class="text-xs font-semibold text-gray-400 uppercase tracking-wider"
                 >Virtual Users</span
               >
               <span
-                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+                class="text-sm font-semibold text-gray-900 dark:text-gray-100"
                 >{reportData.configs?.test?.vus ||
                   reportData.configs?.test?.connections ||
                   "N/A"}</span
               >
             </div>
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-0.5">
               <span
                 class="text-xs font-semibold text-gray-400 uppercase tracking-wider"
                 >App Resources</span
               >
               <span
-                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+                class="text-sm font-semibold text-gray-900 dark:text-gray-100"
                 >{reportData.configs?.resources?.requests?.cpu || "N/A"} CPU / {formatMemory(
                   reportData.configs?.resources?.requests?.memory,
                 )}</span
               >
             </div>
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-0.5">
               <span
                 class="text-xs font-semibold text-gray-400 uppercase tracking-wider"
                 >DB Resources</span
               >
               <span
-                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+                class="text-sm font-semibold text-gray-900 dark:text-gray-100"
                 >{reportData.configs?.databaseResources?.requests?.cpu || "N/A"}
                 CPU / {formatMemory(
                   reportData.configs?.databaseResources?.requests?.memory,
@@ -551,14 +548,15 @@
           </div>
         </div>
 
-        <hr class="my-6 border-white/5" />
-        <div class="flex flex-col gap-4">
+        <div class="my-3 border-t border-white/5"></div>
+
+        <div class="flex flex-col gap-3">
           <div
             class="flex flex-col md:flex-row items-end justify-between gap-4"
           >
             <div class="flex-1">
-              <Label class="mb-2 text-sm font-medium text-gray-400"
-                >Filter Competitors ({selectedCompetitors.length}/10)
+              <Label class="mb-1 text-xs font-medium text-gray-400"
+                >Filter Competitors ({selectedCompetitors.length}/20)
                 <span class="text-gray-500 text-xs ml-2 font-normal"
                   >from {allCompetitors.length} total</span
                 ></Label
@@ -566,7 +564,7 @@
               <MultiSelect
                 items={allCompetitors.map((c) => ({ value: c, name: c }))}
                 bind:value={selectedCompetitors}
-                placeholder="Choose up to 10 competitors..."
+                placeholder="Choose up to 20 competitors..."
                 size="sm"
                 class="bg-white/5 border-white/10 text-white competitor-filter"
               />
@@ -575,13 +573,13 @@
               <Button
                 size="sm"
                 color="alternative"
-                class="bg-white/5 hover:bg-white/10 border-white/10 py-2.5"
+                class="bg-white/5 hover:bg-white/10 border-white/10"
                 onclick={resetCompetitors}>Reset</Button
               >
               <Button
                 size="sm"
                 color="alternative"
-                class="bg-white/5 hover:bg-white/10 border-white/10 py-2.5"
+                class="bg-white/5 hover:bg-white/10 border-white/10"
                 onclick={clearCompetitors}>Clear All</Button
               >
             </div>
@@ -591,7 +589,7 @@
             class="flex flex-col md:flex-row items-end justify-between gap-4"
           >
             <div class="flex-1">
-              <Label class="mb-2 text-sm font-medium text-gray-400"
+              <Label class="mb-1 text-xs font-medium text-gray-400"
                 >Filter Tests ({selectedTestTypes.length}/{allTestTypes.length})</Label
               >
               <MultiSelect
@@ -609,13 +607,13 @@
               <Button
                 size="sm"
                 color="alternative"
-                class="bg-white/5 hover:bg-white/10 border-white/10 py-2.5"
+                class="bg-white/5 hover:bg-white/10 border-white/10"
                 onclick={resetTestTypes}>Reset</Button
               >
               <Button
                 size="sm"
                 color="alternative"
-                class="bg-white/5 hover:bg-white/10 border-white/10 py-2.5"
+                class="bg-white/5 hover:bg-white/10 border-white/10"
                 onclick={clearTestTypes}>Clear All</Button
               >
             </div>
@@ -645,15 +643,15 @@
             currentCols.includes(m.id),
           )}
 
-          <div class="flex flex-col gap-6">
-            <h2 class="text-2xl font-bold text-white px-2">
+          <div class="flex flex-col gap-4">
+            <h2 class="text-lg font-bold text-white px-2">
               {testTypeLabel[testType]}
             </h2>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Card
                 size="xl"
-                class="max-w-none glass-panel rounded-2xl border-0 px-3 py-6"
+                class="max-w-none glass-panel rounded-2xl border-0 px-3 py-3"
               >
                 <BarChart
                   title="Requests Per Second"
@@ -678,7 +676,7 @@
               </Card>
               <Card
                 size="xl"
-                class="max-w-none glass-panel rounded-2xl border-0 px-3 py-6"
+                class="max-w-none glass-panel rounded-2xl border-0 px-3 py-3"
               >
                 <BarChart
                   title="Average Latency (ms)"
@@ -708,15 +706,16 @@
               class="max-w-none glass-panel rounded-2xl border-0 overflow-hidden"
             >
               <div
-                class="p-6 border-b border-white/5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 bg-white/5"
+                class="p-3 px-4 border-b border-white/5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 bg-white/5"
               >
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                <h3 class="text-sm font-medium text-gray-900 dark:text-white">
                   {testTypeLabel[testType]} - Detailed Metrics
                 </h3>
                 <div class="relative">
                   <Button
+                    size="sm"
                     color="alternative"
-                    class="bg-white/5 border-white/10 hover:bg-white/10 text-slate-300 dark:hover:text-white transition-colors gap-2"
+                    class="bg-white/5 border-white/10 hover:bg-white/10 text-slate-300 dark:hover:text-white transition-colors gap-2 text-xs"
                   >
                     Filter Columns
                     <svg
@@ -763,12 +762,12 @@
               <div class="overflow-x-auto">
                 <Table
                   hoverable={true}
-                  class="w-full text-left data-table whitespace-nowrap"
+                  class="w-full text-left data-table whitespace-nowrap text-xs"
                 >
                   <TableHead class="bg-black/20">
                     <TableHeadCell
                       onclick={() => toggleSort("name")}
-                      class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                      class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors py-2 px-3"
                     >
                       Competitor
                       {#if sortKey === "name"}
@@ -780,7 +779,7 @@
                     {#each tableMetrics as metric}
                       <TableHeadCell
                         onclick={() => toggleSort(metric.key)}
-                        class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                        class="cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors py-2 px-3"
                       >
                         {metric.label}
                         {#if sortKey === metric.key}
@@ -799,13 +798,13 @@
                           class="text-slate-200 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
                         >
                           <TableBodyCell
-                            class="font-medium"
+                            class="font-medium py-1.5 px-3"
                             style="color: {getCompColor(comp)};"
                           >
                             {comp}
                           </TableBodyCell>
                           {#each tableMetrics as metric}
-                            <TableBodyCell>
+                            <TableBodyCell class="py-1.5 px-3">
                               {#if metric.isComboResource}
                                 <div
                                   class="inline-flex w-max items-center gap-1.5 whitespace-nowrap cursor-help relative"
