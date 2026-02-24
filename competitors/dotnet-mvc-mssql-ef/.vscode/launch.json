@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run (Core)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Build Core",
+            "program": "${workspaceFolder}/Core/bin/Debug/net10.0/Core.dll",
+            "launchSettingsFilePath": "${workspaceFolder}/Core/Properties/launchSettings.json",
+            "launchSettingsProfile": "http",
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://+:3000"
+            },
+            "envFile": "${workspaceFolder}/Core/.env"
+        }
+    ]
+}

@@ -1,0 +1,36 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Core",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Core/Core.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Scaffold Database (Benchmark)",
+            "command": "dotnet",
+            "type": "process",
+            "options": {
+                "cwd": "${workspaceFolder}/Core"
+            },
+            "args": [
+                "ef",
+                "dbcontext",
+                "scaffold",
+                "-f",
+                "-o",
+                "../Database/Benchmark",
+                "-n",
+                "Database",
+                "Name=BenchmarkDatabase",
+                "Microsoft.EntityFrameworkCore.SqlServer"
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}

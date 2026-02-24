@@ -1,5 +1,3 @@
-using Core.Modules.Benchmark.Services;
-using Database;
 using Microsoft.OpenApi;
 
 namespace Core;
@@ -27,17 +25,9 @@ public class Program
         // builder.Services.AddSingleton<DatabaseContext>();
 
         // Services — each service opens and closes its own connection per call
-        builder.Services.AddScoped<DatabaseContext>();
-        builder.Services.AddScoped<IGetPlaintextService, GetPlaintextService>();
-        builder.Services.AddScoped<IGetJsonService, GetJsonService>();
-        builder.Services.AddScoped<ISingleReadService, SingleReadService>();
-        builder.Services.AddScoped<IMultipleReadService, MultipleReadService>();
-        builder.Services.AddScoped<ISingleCreateService, SingleCreateService>();
-        builder.Services.AddScoped<IMultipleCreateService, MultipleCreateService>();
-        builder.Services.AddScoped<ISingleUpdateService, SingleUpdateService>();
-        builder.Services.AddScoped<IMultipleUpdateService, MultipleUpdateService>();
-        builder.Services.AddScoped<ISingleDeleteService, SingleDeleteService>();
-        builder.Services.AddScoped<IMultipleDeleteService, MultipleDeleteService>();
+        var connectionString = builder.Configuration.GetConnectionString("BenchmarkDatabase");
+        Console.WriteLine("connectionString: " + connectionString);
+
 
         var app = builder.Build();
         if (app.Environment.IsDevelopment())
