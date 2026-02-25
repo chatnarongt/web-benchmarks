@@ -73,18 +73,6 @@
     // Update
     "update-one": "Update One",
     "update-many": "Update Many",
-    // Legacy keys (for old reports)
-    json: "JSON",
-    "single-read": "Single Read",
-    "multiple-read": "Multiple Read",
-    "single-create": "Single Create",
-    "multiple-create": "Multiple Create",
-    "single-update": "Single Update",
-    "multiple-update": "Multiple Update",
-    "database/single-read": "Single Read",
-    "database/multiple-read": "Multiple Read",
-    "database/single-write": "Single Write",
-    "database/multiple-write": "Multiple Write",
   };
 
   function getReportLabel(filename: string) {
@@ -641,7 +629,7 @@
           )}
 
           {@const sortedComps = getSortedCompetitors(testType)}
-          {@const isNoDbTest = testType === "plaintext" || testType === "json"}
+          {@const isNoDbTest = testType === "plaintext" || testType === "json-serialization"}
           {@const currentCols = selectedColumnsByTest[testType] || []}
           {@const availableMetrics = metricsList.filter(
             (m: any) => !(isNoDbTest && m.id.startsWith("db")),
