@@ -41,12 +41,45 @@ export async function getPodMetrics(label: string): Promise<{ cpu: number, memor
     return { cpu: 0, memory: 0 };
 }
 
-export async function getDbConnectionCount(deploymentName: string, dbType: "postgres" | "mssql"): Promise<number> {
+/**
+ * Converts an IP address string (e.g. "10.244.0.5") to the little-endian hex
+ * format used in /proc/net/tcp (e.g. "0500F40A").
+ */
+function ipToHex(ip: string): string {
+    const parts = ip.split('.').map(Number);
+    // /proc/net/tcp uses little-endian byte order for IPv4
+    return parts
+        .reverse()
+        .map(b => b.toString(16).toUpperCase().padStart(2, '0'))
+        .join('');
+}
+
+/**
+ * Counts ESTABLISHED DB connections from the app pod only.
+ *
+ * Measures from the **DB pod** (zero impact on the app under test) but filters
+ * connections by the app pod's IP so that admin / internal / seeding connections
+ * are excluded and the count accurately reflects the application's pool usage.
+ */
+export async function getDbConnectionCount(
+    dbDeploymentName: string,
+    dbType: "postgres" | "mssql",
+    appLabel: string,
+): Promise<number> {
     try {
         const port = dbType === "postgres" ? 5432 : 1433;
         const portHex = port.toString(16).toUpperCase().padStart(4, '0');
 
-        const output = await $`kubectl exec deployment/${deploymentName} -- sh -c "cat /proc/net/tcp /proc/net/tcp6 2>/dev/null || netstat -tan 2>/dev/null || ss -tan 2>/dev/null"`.text();
+        // Resolve the app pod's IP so we can filter connections by source
+        const appPodIp = (
+            await $`kubectl get pod -l app=${appLabel} -o jsonpath='{.items[0].status.podIP}'`.text()
+        ).trim().replace(/'/g, '');
+
+        if (!appPodIp) return 0;
+
+        const appIpHex = ipToHex(appPodIp);
+
+        const output = await $`kubectl exec deployment/${dbDeploymentName} -- sh -c "cat /proc/net/tcp /proc/net/tcp6 2>/dev/null || netstat -tan 2>/dev/null || ss -tan 2>/dev/null"`.text();
         const lines = output.trim().split("\n");
 
         if (lines.length === 0) return 0;
@@ -59,9 +92,11 @@ export async function getDbConnectionCount(deploymentName: string, dbType: "post
                 const localAddr = parts[1];
                 const remAddr = parts[2];
                 const state = parts[3];
-                // Match established state (01) and strictly the target port in hex
-                // 0100007F is 127.0.0.1 in little-endian hex notation used by /proc/net/tcp
-                return localAddr && localAddr.endsWith(`:${portHex}`) && state === "01" && remAddr && !remAddr.startsWith("0100007F:");
+                // Match: local port is DB port, state is ESTABLISHED (01),
+                // and remote IP matches the app pod
+                return localAddr && localAddr.endsWith(`:${portHex}`)
+                    && state === "01"
+                    && remAddr && remAddr.startsWith(`${appIpHex}:`);
             });
             return procConnections.length;
         }
@@ -76,9 +111,9 @@ export async function getDbConnectionCount(deploymentName: string, dbType: "post
             const localAddr = isNetstat ? parts[3] : (parts.length > 3 ? parts[3] : "");
             const remAddr = isNetstat ? parts[4] : (parts.length > 4 ? parts[4] : "");
 
-            return localAddr && localAddr.endsWith(`:${port}`) &&
-                (state === "ESTABLISHED" || state === "ESTAB") &&
-                remAddr && !remAddr.startsWith("127.0.0.1:");
+            return localAddr && localAddr.endsWith(`:${port}`)
+                && (state === "ESTABLISHED" || state === "ESTAB")
+                && remAddr && remAddr.startsWith(`${appPodIp}:`);
         });
 
         return netstatConnections.length;

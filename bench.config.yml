@@ -17,8 +17,8 @@ competitors:
 
 test: # With all default settings 1 test will take about 3.5 minutes, 1 competitor will take about 35 minutes
   types:
-    # - plaintext
-    # - json-serialization
+    - plaintext
+    - json-serialization
     - read-one
     - read-many
     - create-one
@@ -27,10 +27,10 @@ test: # With all default settings 1 test will take about 3.5 minutes, 1 competit
     - update-many
   concurrency: 1 # Number of concurrent competitors tested (1 = sequentially)
   vus: 128 # total number of virtual users to use for the test
-  duration: 2m # Default: 2m, duration of the test for each type, e.g. 2s, 2m, 2h
-  warmupDuration: 30s # Default: 30s, duration of the warm-up test before the actual benchmark
-  idleWaitDuration: 30s # Default: 30s, duration to wait after warmup before starting the actual test
-  databaseSettleDuration: 30s # Default: 30s, duration to wait for database to settle after deployment
+  duration: 1m # Default: 2m, duration of the test for each type, e.g. 2s, 2m, 2h
+  warmupDuration: 10s # Default: 30s, duration of the warm-up test before the actual benchmark
+  idleWaitDuration: 15s # Default: 30s, duration to wait after warmup before starting the actual test
+  databaseSettleDuration: 15s # Default: 30s, duration to wait for database to settle after deployment
   logMode: "info" # "verbose", "info", "summary" or "silent"
 
 resources: # Resources for the competitors

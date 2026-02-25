@@ -38,19 +38,19 @@ Your application must implement the following endpoints:
    - Returns the newly created row as JSON: `{"id": 10001, "randomNumber": 4567}`.
 
 6. **`POST /create-many`**
-   - Request body: `[{"randomNumber": 1234}, {"randomNumber": 5678}, ...]`
-   - Inserts multiple new rows into the `Temp` table, one for each value in the array.
-   - Returns the newly created JSON array of rows.
+   - Request body: `{"items": [{"randomNumber": 1234}, {"randomNumber": 5678}, ...]}`
+   - Inserts multiple new rows into the `Temp` table, one for each item in the array.
+   - Returns the newly created rows: `{"items": [{"id": 10001, "randomNumber": 1234}, ...]}`.
 
-#### Update — `PUT`
+#### Update — `PATCH, PUT`
 
-7. **`PUT /update-one/:id`**
+7. **`PATCH /update-one/:id`**
    - Request body: `{"randomNumber": 4567}`
    - Fetches the row with the given `id` from `World`, updates its `randomNumber` to the given value, and returns the updated row.
 
 8. **`PUT /update-many`**
-   - Request body: `[{"id": 42, "randomNumber": 5812}, {"id": 891, "randomNumber": 2231}, {"id": 3412, "randomNumber": 9901}, ...]`
-   - Fetches the rows whose `id` values match the `id` fields in the array, updates each row's `randomNumber` to the corresponding value, and returns the updated JSON array of rows.
+   - Request body: `{"items": [{"id": 42, "randomNumber": 5812}, {"id": 891, "randomNumber": 2231}, ...]}`
+   - Fetches the rows whose `id` values match the `id` fields in the array, updates each row's `randomNumber` to the corresponding value, and returns the updated rows: `{"items": [{"id": 42, "randomNumber": 5812}, ...]}`.
 
 ### Database Schema
 

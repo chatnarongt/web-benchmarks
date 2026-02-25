@@ -43,18 +43,20 @@ export default function (): void {
         res = http.post(url, body, { headers: JSON_HEADERS });
     }
     else if (TEST_TYPE === 'create-many') {
-        const body = JSON.stringify(Array.from({ length: 20 }, () => ({ randomNumber: rand() })));
+        const items = Array.from({ length: 20 }, () => ({ randomNumber: rand() }));
+        const body = JSON.stringify({ items });
         res = http.post(url, body, { headers: JSON_HEADERS });
     }
 
-    // ── UPDATE (PUT + JSON body) ──────────────────────────────────────────────
+    // ── UPDATE (PATCH, PUT + JSON body) ──────────────────────────────────────────────
     else if (TEST_TYPE === 'update-one') {
         const body = JSON.stringify({ randomNumber: rand() });
-        res = http.put(`${url}/${rand()}`, body, { headers: JSON_HEADERS });
+        res = http.patch(`${url}/${rand()}`, body, { headers: JSON_HEADERS });
     }
     else if (TEST_TYPE === 'update-many') {
         const ids = uniqueIds(20);
-        const body = JSON.stringify(ids.map(id => ({ id, randomNumber: rand() })));
+        const items = ids.map(id => ({ id, randomNumber: rand() }));
+        const body = JSON.stringify({ items });
         res = http.put(url, body, { headers: JSON_HEADERS });
     }
 

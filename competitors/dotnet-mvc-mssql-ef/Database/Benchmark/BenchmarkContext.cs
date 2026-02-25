@@ -13,9 +13,6 @@ public partial class BenchmarkContext : DbContext
 
     public virtual DbSet<World> Worlds { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
-        optionsBuilder.UseSqlServer("Name=BenchmarkDatabase");
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Temp>(entity =>

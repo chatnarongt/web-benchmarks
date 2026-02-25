@@ -191,7 +191,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       // Capture Idle metrics before test
       const idleMetrics = await getPodMetrics(competitor);
       const idleDbMetrics = dbType ? await getPodMetrics(dbAppLabel) : { cpu: 0, memory: 0 };
-      const idleConnections = dbType ? await getDbConnectionCount(dbDeploymentName, dbType) : 0;
+      const idleConnections = dbType ? await getDbConnectionCount(dbDeploymentName, dbType, competitor) : 0;
       console.trace(`[${competitor}] 💤 Idle Metrics -> App CPU: ${idleMetrics.cpu}m, App RAM: ${idleMetrics.memory}Mi | DB CPU: ${idleDbMetrics.cpu}m, DB RAM: ${idleDbMetrics.memory}Mi, Connections: ${idleConnections}`);
 
       // --- ACTUAL TEST PHASE ---
@@ -218,7 +218,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
         const [m, dbM, c] = await Promise.all([
           getPodMetrics(competitor),
           dbType ? getPodMetrics(dbAppLabel) : Promise.resolve({ cpu: 0, memory: 0 }),
-          dbType ? getDbConnectionCount(dbDeploymentName, dbType) : Promise.resolve(0)
+          dbType ? getDbConnectionCount(dbDeploymentName, dbType, competitor) : Promise.resolve(0)
         ]);
         if (m.cpu > peakCpu) peakCpu = m.cpu;
         if (m.memory > peakMemory) peakMemory = m.memory;

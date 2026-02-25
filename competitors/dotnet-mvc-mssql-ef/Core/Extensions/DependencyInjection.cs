@@ -1,5 +1,6 @@
 using Core.Modules.Benchmark.UseCases;
 using Database.Benchmark;
+using Microsoft.EntityFrameworkCore;
 
 namespace Core.Extensions;
 
@@ -7,7 +8,10 @@ public static class DependencyInjectionExtensions
 {
     public static WebApplicationBuilder AddDependencyInjection(this WebApplicationBuilder builder)
     {
-        builder.Services.AddDbContext<BenchmarkContext>();
+        builder.Services.AddDbContextPool<BenchmarkContext>(options =>
+        {
+            options.UseSqlServer(builder.Configuration.GetConnectionString("BenchmarkDatabase"));
+        });
 
         /*
         * AddSingleton — Should be reserved for services that are stateless or
@@ -32,6 +36,8 @@ public static class DependencyInjectionExtensions
         builder.Services.AddScoped<IReadManyUseCase, ReadManyUseCase>();
         builder.Services.AddScoped<ICreateOneUseCase, CreateOneUseCase>();
         builder.Services.AddScoped<ICreateManyUseCase, CreateManyUseCase>();
+        builder.Services.AddScoped<IUpdateOneUseCase, UpdateOneUseCase>();
+        builder.Services.AddScoped<IUpdateManyUseCase, UpdateManyUseCase>();
 
         return builder;
     }

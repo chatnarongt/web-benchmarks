@@ -652,7 +652,7 @@
 
           <div class="flex flex-col gap-4">
             <h2 class="text-lg font-bold text-white px-2">
-              {testTypeLabel[testType]}
+              {testTypeLabel[testType] || testType}
             </h2>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -716,7 +716,7 @@
                 class="p-3 px-4 border-b border-white/5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 bg-white/5"
               >
                 <h3 class="text-sm font-medium text-gray-900 dark:text-white">
-                  {testTypeLabel[testType]} - Detailed Metrics
+                  {testTypeLabel[testType] || testType} - Detailed Metrics
                 </h3>
                 <div class="relative">
                   <Button

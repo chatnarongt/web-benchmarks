@@ -13,7 +13,9 @@ public class BenchmarkController(
     IReadOneUseCase getSingleRead,
     IReadManyUseCase getMultipleRead,
     ICreateOneUseCase createOne,
-    ICreateManyUseCase createMany
+    ICreateManyUseCase createMany,
+    IUpdateOneUseCase updateOne,
+    IUpdateManyUseCase updateMany
 ) : ControllerBase
 {
     [HttpGet("plaintext")]
@@ -47,9 +49,9 @@ public class BenchmarkController(
         OperationId = "ReadOne"
     )]
     [ProducesResponseType(typeof(ReadOneResponse), StatusCodes.Status200OK, "application/json")]
-    public ReadOneResponse ReadOne([FromQuery] ReadOneQuery query)
+    public Task<ReadOneResponse> ReadOne([FromQuery] ReadOneQuery query)
     {
-        return getSingleRead.Execute(query);
+        return getSingleRead.ExecuteAsync(query);
     }
 
     [HttpGet("read-many")]
@@ -58,11 +60,7 @@ public class BenchmarkController(
         Description = "Returns a JSON array of records from the 'World' table using LIMIT and OFFSET.",
         OperationId = "ReadMany"
     )]
-    [ProducesResponseType(
-        typeof(Task<ReadManyResponse>),
-        StatusCodes.Status200OK,
-        "application/json"
-    )]
+    [ProducesResponseType(typeof(ReadManyResponse), StatusCodes.Status200OK, "application/json")]
     public Task<ReadManyResponse> ReadMany([FromQuery] ReadManyQuery request)
     {
         return getMultipleRead.ExecuteAsync(request);
@@ -75,9 +73,9 @@ public class BenchmarkController(
         OperationId = "CreateOne"
     )]
     [ProducesResponseType(typeof(CreateOneResponse), StatusCodes.Status200OK, "application/json")]
-    public CreateOneResponse CreateOne([FromBody] CreateOneRequestBody request)
+    public Task<CreateOneResponse> CreateOne([FromBody] CreateOneRequestBody request)
     {
-        return createOne.Execute(request);
+        return createOne.ExecuteAsync(request);
     }
 
     [HttpPost("create-many")]
@@ -86,13 +84,36 @@ public class BenchmarkController(
         Description = "Creates multiple new records in the 'Temp' table with random numbers.",
         OperationId = "CreateMany"
     )]
-    [ProducesResponseType(
-        typeof(Task<CreateManyResponse>),
-        StatusCodes.Status200OK,
-        "application/json"
-    )]
+    [ProducesResponseType(typeof(CreateManyResponse), StatusCodes.Status200OK, "application/json")]
     public Task<CreateManyResponse> CreateMany([FromBody] CreateManyRequestBody request)
     {
         return createMany.ExecuteAsync(request);
+    }
+
+    [HttpPatch("update-one/{id:int}")]
+    [SwaggerOperation(
+        Summary = "Update One",
+        Description = "Updates a single record in the 'World' table with a random number.",
+        OperationId = "UpdateOne"
+    )]
+    [ProducesResponseType(typeof(UpdateOneResponse), StatusCodes.Status200OK, "application/json")]
+    public Task<UpdateOneResponse> UpdateOne(
+        [FromRoute] UpdateOneParams query,
+        [FromBody] UpdateOneRequestBody request
+    )
+    {
+        return updateOne.ExecuteAsync(query, request);
+    }
+
+    [HttpPut("update-many")]
+    [SwaggerOperation(
+        Summary = "Update Many",
+        Description = "Updates multiple records in the 'World' table with random numbers.",
+        OperationId = "UpdateMany"
+    )]
+    [ProducesResponseType(typeof(UpdateManyResponse), StatusCodes.Status200OK, "application/json")]
+    public Task<UpdateManyResponse> UpdateMany([FromBody] UpdateManyRequestBody request)
+    {
+        return updateMany.ExecuteAsync(request);
     }
 }
