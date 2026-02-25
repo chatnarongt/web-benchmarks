@@ -17,41 +17,40 @@ Your application must implement the following endpoints:
 1. **`GET /plaintext`**
    - Returns a simple `text/plain` response (e.g., "Hello World!").
 
-2. **`GET /json`**
+2. **`GET /json-serialization`**
    - Returns a simple `application/json` response (e.g., `{"message": "Hello World!"}`).
 
 #### Read — `GET`
 
-3. **`GET /single-read?id=[number]`**
+3. **`GET /read-one?id=[number]`**
    - Queries the `World` table for the row with the specified `id`.
    - Returns the row as JSON: `{"id": 123, "randomNumber": 4567}`.
 
-4. **`GET /multiple-read?limit=[number]&offset=[number]`**
+4. **`GET /read-many?limit=[number]&offset=[number]`**
    - Fetches rows from the `World` table using `LIMIT` and `OFFSET` (e.g. `SELECT ... LIMIT 20 OFFSET 100`).
    - Returns a JSON array of rows.
 
 #### Create — `POST`
 
-5. **`POST /single-create`**
+5. **`POST /create-one`**
    - Request body: `{"randomNumber": 4567}`
    - Inserts a new row into the `Temp` table with the given `randomNumber`.
    - Returns the newly created row as JSON: `{"id": 10001, "randomNumber": 4567}`.
 
-6. **`POST /multiple-create`**
-   - Request body: `{"r": [4567, 1234, 8901, ...]}`
-   - Inserts multiple new rows into the `Temp` table, one for each value in `r`.
+6. **`POST /create-many`**
+   - Request body: `[{"randomNumber": 1234}, {"randomNumber": 5678}, ...]`
+   - Inserts multiple new rows into the `Temp` table, one for each value in the array.
    - Returns the newly created JSON array of rows.
 
 #### Update — `PUT`
 
-7. **`PUT /single-update`**
-   - Request body: `{"id": 123, "randomNumber": 4567}`
+7. **`PUT /update-one/:id`**
+   - Request body: `{"randomNumber": 4567}`
    - Fetches the row with the given `id` from `World`, updates its `randomNumber` to the given value, and returns the updated row.
 
-8. **`PUT /multiple-update`**
-   - Request body: `{"ids": [42, 891, 3412, ...], "r": [5812, 2231, 9901, ...]}`
-   - Fetches the rows whose `id` values match `ids`, updates each row's `randomNumber` using the corresponding value from `r` (matched positionally).
-   - Returns the updated JSON array of rows.
+8. **`PUT /update-many`**
+   - Request body: `[{"id": 42, "randomNumber": 5812}, {"id": 891, "randomNumber": 2231}, {"id": 3412, "randomNumber": 9901}, ...]`
+   - Fetches the rows whose `id` values match the `id` fields in the array, updates each row's `randomNumber` to the corresponding value, and returns the updated JSON array of rows.
 
 ### Database Schema
 

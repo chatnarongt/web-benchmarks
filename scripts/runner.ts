@@ -3,6 +3,7 @@ import * as fs from "fs";
 import { $ } from "bun";
 import { generateK8sManifest, generatePostgresManifest, generateMssqlManifest } from "./manifests.ts";
 import { parseK6Output, mergePodMetrics, parseTimeToSeconds, parseConfig, type BenchmarkConfig, type CompetitorConfig } from "./parser.ts";
+import { buildEnv } from "./env-builder.ts";
 import { setupMetricsServer } from "./setup-metrics.ts";
 import { getPodMetrics, getDbConnectionCount } from "./metrics.ts";
 
@@ -115,25 +116,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
     // 4 & 5. Generate and Apply Kubernetes Manifests
     console.trace(`\n[${competitor}] ☸️  Deploying to Kubernetes...`);
 
-    // Inject Database Host properly
-    const env = { ...(competitorConfig.env || {}) };
-
-    // Replace 'postgres-service' or 'mssql-service' placeholders with the actual dbServiceName in all env vars
-    for (const key of Object.keys(env)) {
-      const valStr = String(env[key]);
-      if (dbType === "postgres" && valStr.includes("postgres-service")) {
-        env[key] = valStr.replace("postgres-service", dbServiceName);
-      } else if (dbType === "mssql" && valStr.includes("mssql-service")) {
-        env[key] = valStr.replace("mssql-service", dbServiceName);
-      }
-    }
-
-    // Set a default DATABASE_URL only if missing entirely
-    if (dbType === "postgres" && !env["DATABASE_URL"]) {
-      env["DATABASE_URL"] = `postgres://postgres:benchmark@${dbServiceName}:5432/benchmark?sslmode=disable`;
-    } else if (dbType === "mssql" && !env["DATABASE_URL"]) {
-      env["DATABASE_URL"] = `Server=${dbServiceName},1433;Database=benchmark;User Id=sa;Password=Benchmark123!;Encrypt=False;TrustServerCertificate=True;Connection Timeout=30;Min Pool Size=1;Max Pool Size=100;`;
-    }
+    const env = buildEnv(competitorConfig, dbServiceName);
 
     const k8sManifest = generateK8sManifest(competitor, config.resources, env);
     const manifestPath = `/tmp/${competitor}-manifest.yml`;
@@ -160,20 +143,20 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
     // Iterate through every test type requested in bench.config.yml
     for (const testType of config.test.types) {
       let endpoint = '/plaintext';
-      if (testType === 'json') {
-        endpoint = '/json';
-      } else if (testType === 'single-read') {
-        endpoint = '/single-read';
-      } else if (testType === 'multiple-read') {
-        endpoint = '/multiple-read';
-      } else if (testType === 'single-create') {
-        endpoint = '/single-create';
-      } else if (testType === 'multiple-create') {
-        endpoint = '/multiple-create';
-      } else if (testType === 'single-update') {
-        endpoint = '/single-update';
-      } else if (testType === 'multiple-update') {
-        endpoint = '/multiple-update';
+      if (testType === 'json-serialization') {
+        endpoint = '/json-serialization';
+      } else if (testType === 'read-one') {
+        endpoint = '/read-one';
+      } else if (testType === 'read-many') {
+        endpoint = '/read-many';
+      } else if (testType === 'create-one') {
+        endpoint = '/create-one';
+      } else if (testType === 'create-many') {
+        endpoint = '/create-many';
+      } else if (testType === 'update-one') {
+        endpoint = '/update-one';
+      } else if (testType === 'update-many') {
+        endpoint = '/update-many';
       }
       const targetUrl = `http://${competitor}-service${endpoint}`;
       const sanitizedTestType = testType.replace(/\//g, "-");

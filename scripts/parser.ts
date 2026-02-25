@@ -2,9 +2,19 @@
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 
+export interface PoolConfig {
+  maxSize?: number;
+  minSize?: number;
+  lifetime?: number;
+  timeout?: number;
+  encrypt?: boolean;
+  trustServerCertificate?: boolean;
+}
+
 export interface CompetitorConfig {
   name: string;
   database?: "postgres" | "mssql";
+  pool?: PoolConfig;
   env?: Record<string, string>;
 }
 

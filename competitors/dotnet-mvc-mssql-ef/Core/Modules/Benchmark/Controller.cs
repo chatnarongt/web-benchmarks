@@ -28,7 +28,7 @@ public class BenchmarkController(
         return getPlaintext.Execute();
     }
 
-    [HttpGet("json")]
+    [HttpGet("json-serialization")]
     [SwaggerOperation(
         Summary = "Get JSON",
         Description = "Returns a JSON response with the message 'Hello, World!'.",

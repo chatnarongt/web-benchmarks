@@ -63,17 +63,24 @@
   const testTypeLabel: Record<string, string> = {
     // Non-DB
     plaintext: "Plaintext",
-    json: "JSON",
+    "json-serialization": "JSON Serialization",
     // Read
+    "read-one": "Read One",
+    "read-many": "Read Many",
+    // Create
+    "create-one": "Create One",
+    "create-many": "Create Many",
+    // Update
+    "update-one": "Update One",
+    "update-many": "Update Many",
+    // Legacy keys (for old reports)
+    json: "JSON",
     "single-read": "Single Read",
     "multiple-read": "Multiple Read",
-    // Create
     "single-create": "Single Create",
     "multiple-create": "Multiple Create",
-    // Update
     "single-update": "Single Update",
     "multiple-update": "Multiple Update",
-    // Legacy keys (for old reports)
     "database/single-read": "Single Read",
     "database/multiple-read": "Multiple Read",
     "database/single-write": "Single Write",

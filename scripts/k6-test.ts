@@ -21,39 +21,40 @@ export default function (): void {
         return [...set];
     };
 
-    if (TEST_TYPE === 'plaintext' || TEST_TYPE === 'json') {
+    if (TEST_TYPE === 'plaintext') {
+        res = http.get(url);
+    }
+    else if (TEST_TYPE === 'json-serialization') {
         res = http.get(url);
     }
 
     // ── READ (GET) ────────────────────────────────────────────────────────────
-    else if (TEST_TYPE === 'single-read') {
+    else if (TEST_TYPE === 'read-one') {
         res = http.get(`${url}?id=${rand()}`);
     }
-    else if (TEST_TYPE === 'multiple-read') {
+    else if (TEST_TYPE === 'read-many') {
         const offset = Math.floor(Math.random() * 9980);
         res = http.get(`${url}?limit=20&offset=${offset}`);
     }
 
     // ── CREATE (POST + JSON body) ─────────────────────────────────────────────
-    else if (TEST_TYPE === 'single-create') {
+    else if (TEST_TYPE === 'create-one') {
         const body = JSON.stringify({ randomNumber: rand() });
         res = http.post(url, body, { headers: JSON_HEADERS });
     }
-    else if (TEST_TYPE === 'multiple-create') {
-        const r = Array.from({ length: 20 }, () => rand());
-        const body = JSON.stringify({ r });
+    else if (TEST_TYPE === 'create-many') {
+        const body = JSON.stringify(Array.from({ length: 20 }, () => ({ randomNumber: rand() })));
         res = http.post(url, body, { headers: JSON_HEADERS });
     }
 
     // ── UPDATE (PUT + JSON body) ──────────────────────────────────────────────
-    else if (TEST_TYPE === 'single-update') {
-        const body = JSON.stringify({ id: rand(), randomNumber: rand() });
-        res = http.put(url, body, { headers: JSON_HEADERS });
+    else if (TEST_TYPE === 'update-one') {
+        const body = JSON.stringify({ randomNumber: rand() });
+        res = http.put(`${url}/${rand()}`, body, { headers: JSON_HEADERS });
     }
-    else if (TEST_TYPE === 'multiple-update') {
+    else if (TEST_TYPE === 'update-many') {
         const ids = uniqueIds(20);
-        const r = Array.from({ length: 20 }, () => rand());
-        const body = JSON.stringify({ ids, r });
+        const body = JSON.stringify(ids.map(id => ({ id, randomNumber: rand() })));
         res = http.put(url, body, { headers: JSON_HEADERS });
     }
 
