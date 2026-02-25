@@ -66,6 +66,8 @@
         "ef",
         "dbcontext",
         "scaffold",
+        "--no-onconfiguring",
+        "--no-pluralize",
         "-f",
         "-o",
         "../Database/Benchmark",

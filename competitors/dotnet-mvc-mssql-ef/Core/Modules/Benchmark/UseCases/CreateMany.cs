@@ -5,11 +5,33 @@ namespace Core.Modules.Benchmark.UseCases;
 
 public interface ICreateManyUseCase
 {
+    CreateManyResponse Execute(CreateManyRequestBody request);
+
     Task<CreateManyResponse> ExecuteAsync(CreateManyRequestBody request);
 }
 
 public class CreateManyUseCase(BenchmarkContext db) : ICreateManyUseCase
 {
+    public CreateManyResponse Execute(CreateManyRequestBody request)
+    {
+        var temps = request
+            .Items.Select(item => new Temp { RandomNumber = item.RandomNumber })
+            .ToList();
+
+        db.Temp.AddRange(temps);
+        db.SaveChanges();
+
+        var items = temps
+            .Select(item => new CreateOneResponse
+            {
+                Id = item.Id,
+                RandomNumber = item.RandomNumber,
+            })
+            .ToList();
+
+        return new() { Items = items };
+    }
+
     public async Task<CreateManyResponse> ExecuteAsync(CreateManyRequestBody request)
     {
         // 1. Pre-allocate list capacity to avoid resizing
@@ -27,7 +49,7 @@ public class CreateManyUseCase(BenchmarkContext db) : ICreateManyUseCase
         db.ChangeTracker.AutoDetectChangesEnabled = false;
         try
         {
-            db.Temps.AddRange(temps);
+            db.Temp.AddRange(temps);
             await db.SaveChangesAsync();
         }
         finally

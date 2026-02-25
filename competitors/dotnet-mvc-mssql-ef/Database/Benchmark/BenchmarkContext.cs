@@ -1,25 +1,23 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
 namespace Database.Benchmark;
 
 public partial class BenchmarkContext : DbContext
 {
-    public BenchmarkContext() { }
-
     public BenchmarkContext(DbContextOptions<BenchmarkContext> options)
         : base(options) { }
 
-    public virtual DbSet<Temp> Temps { get; set; }
+    public virtual DbSet<Temp> Temp { get; set; }
 
-    public virtual DbSet<World> Worlds { get; set; }
+    public virtual DbSet<World> World { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Temp>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Temp__3213E83F433261B2");
-
-            entity.ToTable("Temp");
+            entity.HasKey(e => e.Id).HasName("PK__Temp__3213E83F38F60023");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.RandomNumber).HasColumnName("randomNumber");
@@ -27,9 +25,7 @@ public partial class BenchmarkContext : DbContext
 
         modelBuilder.Entity<World>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__World__3213E83F5E9676F9");
-
-            entity.ToTable("World");
+            entity.HasKey(e => e.Id).HasName("PK__World__3213E83FD26C5AB2");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.RandomNumber).HasColumnName("randomNumber");
