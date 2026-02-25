@@ -1,6 +1,6 @@
 ﻿namespace Database.Benchmark;
 
-public partial class World
+public partial class Temp
 {
     public int Id { get; set; }
 

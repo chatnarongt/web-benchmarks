@@ -1,4 +1,7 @@
 {
+  "cSpell.words": [
+    "Swashbuckle"
+  ],
   "editor.defaultFormatter": "csharpier.csharpier-vscode",
   "editor.codeActionsOnSave": {
     "source.fixAll.csharpier": "explicit"

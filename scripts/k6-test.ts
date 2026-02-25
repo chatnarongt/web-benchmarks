@@ -30,8 +30,8 @@ export default function (): void {
         res = http.get(`${url}?id=${rand()}`);
     }
     else if (TEST_TYPE === 'multiple-read') {
-        const ids = uniqueIds(20).join(',');
-        res = http.get(`${url}?ids=${ids}`);
+        const offset = Math.floor(Math.random() * 9980);
+        res = http.get(`${url}?limit=20&offset=${offset}`);
     }
 
     // ── CREATE (POST + JSON body) ─────────────────────────────────────────────

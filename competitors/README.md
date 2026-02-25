@@ -26,8 +26,8 @@ Your application must implement the following endpoints:
    - Queries the `World` table for the row with the specified `id`.
    - Returns the row as JSON: `{"id": 123, "randomNumber": 4567}`.
 
-4. **`GET /multiple-read?ids=[id1,id2,id3...]`**
-   - Fetches the rows whose `id` values are provided in the comma-separated `ids` parameter (e.g. `WHERE id IN (...)`).
+4. **`GET /multiple-read?limit=[number]&offset=[number]`**
+   - Fetches rows from the `World` table using `LIMIT` and `OFFSET` (e.g. `SELECT ... LIMIT 20 OFFSET 100`).
    - Returns a JSON array of rows.
 
 #### Create — `POST`
