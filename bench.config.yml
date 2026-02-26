@@ -11,8 +11,8 @@ competitors:
     env:
       ConnectionStrings__BenchmarkDatabase: >-
         Server=mssql-service;
-        Database=benchmark;
-        User Id=sa;
+        Database=Benchmark;
+        User Id=SA;
         Password=Benchmark123!;
 
 test: # With all default settings 1 test will take about 3.5 minutes, 1 competitor will take about 35 minutes

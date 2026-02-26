@@ -54,7 +54,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
 
     // 2. Deploy required database for this competitor
     if (dbType === "postgres") {
-      console.trace(`[${competitor}] ☸️  Deploying PostgreSQL database (${dbServiceName})...`);
+      console.info(`[${competitor}] ☸️  Deploying PostgreSQL database (${dbServiceName})...`);
       const pgManifest = generatePostgresManifest(config.databaseResources, dbSuffix);
       const pgManifestPath = `/tmp/postgres-manifest-${dbSuffix}.yml`;
       fs.writeFileSync(pgManifestPath, pgManifest);
@@ -71,7 +71,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       }
       console.info(`[${competitor}] ✅ PostgreSQL ready.`);
     } else if (dbType === "mssql") {
-      console.trace(`[${competitor}] ☸️  Deploying MSSQL database (${dbServiceName})...`);
+      console.info(`[${competitor}] ☸️  Deploying MSSQL database (${dbServiceName})...`);
       const mssqlManifest = generateMssqlManifest(config.databaseResources, dbSuffix);
       const mssqlManifestPath = `/tmp/mssql-manifest-${dbSuffix}.yml`;
       fs.writeFileSync(mssqlManifestPath, mssqlManifest);
@@ -98,7 +98,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
     }
 
     // 3. Build Docker Image
-    console.trace(`[${competitor}] 🐳 Building Docker image...`);
+    console.info(`[${competitor}] 🐳 Building Docker image...`);
     const buildArgs: string[] = [];
     if (competitorConfig.env) {
       for (const [key, value] of Object.entries(competitorConfig.env)) {
@@ -114,7 +114,8 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
     console.info(`[${competitor}] ✅ Docker image built successfully.`);
 
     // 4 & 5. Generate and Apply Kubernetes Manifests
-    console.trace(`\n[${competitor}] ☸️  Deploying to Kubernetes...`);
+    console.trace('');
+    console.info(`[${competitor}] ☸️  Deploying to Kubernetes...`);
 
     const env = buildEnv(competitorConfig, dbServiceName);
 
@@ -166,7 +167,8 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       const warmupSecs = parseTimeToSeconds(warmupDuration);
       const scriptContent = fs.readFileSync("./scripts/k6-test.ts", "utf8");
       if (warmupSecs > 0) {
-        console.info(`\n[${competitor}] 🔥 Warming up for '${testType}' (${warmupDuration})...`);
+        console.trace('');
+        console.info(`[${competitor}] 🔥 Warming up for '${testType}' (${warmupDuration})...`);
         try {
           await $`echo ${scriptContent} | kubectl run k6-warmup-${competitor}-${sanitizedTestType} --rm -i \
                         --image=grafana/k6 \
@@ -176,7 +178,8 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
           console.warn(`[${competitor}] ⚠️ Warmup failed (ignoring):`, e);
         }
       } else {
-        console.trace(`\n[${competitor}] ⏩ Skipping warmup for '${testType}' (duration is ${warmupDuration})`);
+        console.trace('');
+        console.trace(`[${competitor}] ⏩ Skipping warmup for '${testType}' (duration is ${warmupDuration})`);
       }
 
       const idleWaitDurationStr = config.test.idleWaitDuration || "15s";
@@ -200,7 +203,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       // Run k6 and capture output. We run it as a standalone Pod passing script via stdin.
       const testDurationSecs = parseTimeToSeconds(config.test.duration);
       const k6Command = `k6 run --vus ${config.test.vus} --duration ${testDurationSecs}s -e TARGET_URL=${targetUrl} -e TEST_TYPE=${testType}`;
-      console.info(`[${competitor}] Executing: ${k6Command} from inside cluster...`);
+      console.trace(`[${competitor}] Executing: ${k6Command} from inside cluster...`);
 
       // Ensure any leftover pod is deleted
       await $`kubectl delete pod k6-test-${competitor}-${sanitizedTestType} --ignore-not-found`.quiet();
@@ -249,7 +252,8 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       );
 
       finalReport[competitor][testType] = metrics;
-      console.info(`[${competitor}] 📈 Metrics (${testType}):`, metrics);
+      console.trace(`[${competitor}] 📈 Metrics (${testType}):`);
+      console.trace(metrics);
 
       // Wait 5 seconds between separate tests for DNS/sockets to flush
       await new Promise(resolve => setTimeout(resolve, 5000));
