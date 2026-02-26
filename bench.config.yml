@@ -25,6 +25,8 @@ test: # With all default settings 1 test will take about 3.5 minutes, 1 competit
     - create-many
     - update-one
     - update-many
+    - delete-one
+    - delete-many
   concurrency: 1 # Number of concurrent competitors tested (1 = sequentially)
   vus: 128 # total number of virtual users to use for the test
   duration: 2m # Default: 2m, duration of the test for each type, e.g. 2s, 2m, 2h

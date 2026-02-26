@@ -60,6 +60,20 @@ export default function (): void {
         res = http.put(url, body, { headers: JSON_HEADERS });
     }
 
+    // ── DELETE ────────────────────────────────────────────────────────────────
+    // Each VU operates on a non-overlapping block of IDs so deletes are
+    // sequential (1, 2, 3, …) within every VU and never conflict across VUs.
+    else if (TEST_TYPE === 'delete-one') {
+        const id = (__VU - 1) * 200_000 + __ITER + 1;
+        res = http.del(`${url}/${id}`);
+    }
+    else if (TEST_TYPE === 'delete-many') {
+        const baseId = (__VU - 1) * 200_000 + __ITER * 20 + 1;
+        const ids = Array.from({ length: 20 }, (_, i) => baseId + i);
+        const body = JSON.stringify({ ids });
+        res = http.del(url, body, { headers: JSON_HEADERS });
+    }
+
     if (res) {
         check(res, {
             'is status 2xx': (r: any) => r.status >= 200 && r.status < 300,

@@ -52,6 +52,17 @@ Your application must implement the following endpoints:
    - Request body: `{"items": [{"id": 42, "randomNumber": 5812}, {"id": 891, "randomNumber": 2231}, ...]}`
    - Fetches the rows whose `id` values match the `id` fields in the array, updates each row's `randomNumber` to the corresponding value, and returns the updated rows: `{"items": [{"id": 42, "randomNumber": 5812}, ...]}`.
 
+#### Delete — `DELETE`
+
+9. **`DELETE /delete-one/:id`**
+   - Deletes the row with the given `id` from the `Temp` table.
+   - Returns a success status (e.g., 204 No Content).
+
+10. **`DELETE /delete-many`**
+    - Request body: `{"ids": [42, 891, ...]}`
+    - Deletes the rows with the given `id` values from the `Temp` table.
+    - Returns a success status.
+
 ### Database Schema
 
 The provided database (PostgreSQL or MSSQL) will automatically be seeded with two tables:
