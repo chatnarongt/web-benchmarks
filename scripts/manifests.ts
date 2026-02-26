@@ -83,7 +83,7 @@ data:
       id SERIAL PRIMARY KEY,
       randomNumber INTEGER NOT NULL
     );
-    INSERT INTO Temp (randomNumber) SELECT floor(random() * 10000 + 1) FROM generate_series(1, 10000);
+    INSERT INTO Temp (randomNumber) SELECT floor(random() * 10000 + 1) FROM generate_series(1, 10000000);
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -181,12 +181,11 @@ data:
             id INT PRIMARY KEY IDENTITY(1,1),
             randomNumber INT NOT NULL
         );
-        DECLARE @cnt2 INT = 0;
-        WHILE @cnt2 < 10000
-        BEGIN
-            INSERT INTO Temp (randomNumber) VALUES (ABS(CHECKSUM(NEWID())) % 10000 + 1);
-            SET @cnt2 = @cnt2 + 1;
-        END
+        INSERT INTO Temp (randomNumber)
+        SELECT TOP 10000000 ABS(CHECKSUM(NEWID())) % 10000 + 1
+        FROM sys.all_objects a
+        CROSS JOIN sys.all_objects b
+        CROSS JOIN sys.all_objects c;
     END
     GO
   entrypoint.sh: |

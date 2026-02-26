@@ -63,7 +63,7 @@ CREATE TABLE World (
   randomNumber INT NOT NULL
 );
 
--- Scratch table used exclusively for create and delete tests (seeded with 10,000 rows)
+-- Scratch table used exclusively for create and delete tests (seeded with 10 million rows)
 CREATE TABLE Temp (
   id INT PRIMARY KEY AUTOINCREMENT,
   randomNumber INT NOT NULL
