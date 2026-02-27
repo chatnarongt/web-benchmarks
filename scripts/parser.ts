@@ -122,6 +122,40 @@ export function parseK6Output(output: string) {
   return metrics;
 }
 
+export interface ErrorSample {
+  count: number;
+  status: number;
+  response: any;
+}
+
+export function parseK6Errors(output: string): ErrorSample[] {
+  const prefix = 'K6_ERROR_SAMPLE:';
+  const counts = new Map<string, { status: number; body: string; count: number }>();
+
+  for (const line of output.split('\n')) {
+    const idx = line.indexOf(prefix);
+    if (idx === -1) continue;
+    try {
+      const raw = JSON.parse(line.substring(idx + prefix.length).trim());
+      const key = `${raw.status}:${raw.body}`;
+      const entry = counts.get(key);
+      if (entry) {
+        entry.count++;
+      } else {
+        counts.set(key, { status: raw.status, body: raw.body, count: 1 });
+      }
+    } catch { /* malformed line — skip */ }
+  }
+
+  return [...counts.values()]
+    .sort((a, b) => b.count - a.count)
+    .map(({ count, status, body }) => {
+      let response: any = body;
+      try { response = JSON.parse(body); } catch { /* keep as string */ }
+      return { count, status, response };
+    });
+}
+
 export function mergePodMetrics(
   parsedMetrics: any,
   idleCpu: number, peakCpu: number,

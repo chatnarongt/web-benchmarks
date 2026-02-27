@@ -15,7 +15,9 @@ public class BenchmarkController(
     ICreateOneUseCase createOne,
     ICreateManyUseCase createMany,
     IUpdateOneUseCase updateOne,
-    IUpdateManyUseCase updateMany
+    IUpdateManyUseCase updateMany,
+    IDeleteOneUseCase deleteOne,
+    IDeleteManyUseCase deleteMany
 ) : ControllerBase
 {
     [HttpGet("plaintext")]
@@ -115,5 +117,31 @@ public class BenchmarkController(
     public Task<UpdateManyResponse> UpdateMany([FromBody] UpdateManyRequestBody request)
     {
         return updateMany.ExecuteAsync(request);
+    }
+
+    [HttpDelete("delete-one/{id:int}")]
+    [SwaggerOperation(
+        Summary = "Delete One",
+        Description = "Deletes a single record from the 'Temp' table by ID.",
+        OperationId = "DeleteOne"
+    )]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DeleteOne([FromRoute] DeleteOneParams query)
+    {
+        await deleteOne.ExecuteAsync(query);
+        return NoContent();
+    }
+
+    [HttpDelete("delete-many")]
+    [SwaggerOperation(
+        Summary = "Delete Many",
+        Description = "Deletes multiple records from the 'Temp' table by IDs.",
+        OperationId = "DeleteMany"
+    )]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DeleteMany([FromBody] DeleteManyRequestBody request)
+    {
+        await deleteMany.ExecuteAsync(request);
+        return NoContent();
     }
 }

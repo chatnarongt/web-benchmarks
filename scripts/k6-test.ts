@@ -5,6 +5,10 @@ import { check } from 'k6';
 const TARGET_URL: string = __ENV.TARGET_URL || 'http://localhost:3000';
 const TEST_TYPE: string = __ENV.TEST_TYPE || 'plaintext';
 
+// Per-VU deduplication set — each VU has its own JS context so this is isolated.
+// We emit at most one K6_ERROR_SAMPLE line per unique (status + body) per VU.
+const _seenErrors = new Set<string>();
+
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
 export default function (): void {
@@ -75,9 +79,17 @@ export default function (): void {
     }
 
     if (res) {
-        check(res, {
+        const ok = check(res, {
             'is status 2xx': (r: any) => r.status >= 200 && r.status < 300,
         });
+        if (!ok) {
+            const body = String(res.body ?? '').substring(0, 500);
+            const key = `${res.status}:${body}`;
+            if (!_seenErrors.has(key)) {
+                _seenErrors.add(key);
+                console.log(`K6_ERROR_SAMPLE:${JSON.stringify({ status: res.status, body })}`);
+            }
+        }
     }
 }
 

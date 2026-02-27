@@ -55,8 +55,13 @@ export function buildEnv(
         const hasUrl = !!env["DATABASE_URL"];
         const hasCs = !!env["ConnectionStrings__BenchmarkDatabase"];
 
+        // Detect Prisma-style sqlserver:// URIs — pool params are ADO.NET-only and
+        // must not be appended to URI-format connection strings. These competitors
+        // manage pool sizing through individual env vars (DATABASE_MAX_POOL_SIZE etc.)
+        const urlIsPrismaFormat = hasUrl && env["DATABASE_URL"].startsWith("sqlserver://");
+
         if (!hasUrl && !hasCs) {
-            // Neither provided — build default, then apply pool params
+            // Neither provided — build default ADO.NET string, then apply pool params
             let cs = `Server=${dbServiceName},1433;Database=benchmark;User Id=sa;Password=Benchmark123!;`;
             cs = pool
                 ? applyMssqlPool(cs, pool)
@@ -68,13 +73,18 @@ export function buildEnv(
             if (pool) env["ConnectionStrings__BenchmarkDatabase"] = applyMssqlPool(env["ConnectionStrings__BenchmarkDatabase"], pool);
             env["DATABASE_URL"] = env["ConnectionStrings__BenchmarkDatabase"];
         } else if (hasUrl && !hasCs) {
-            // Generic style — apply pool then derive ConnectionStrings__
-            if (pool) env["DATABASE_URL"] = applyMssqlPool(env["DATABASE_URL"], pool);
-            env["ConnectionStrings__BenchmarkDatabase"] = env["DATABASE_URL"];
+            if (urlIsPrismaFormat) {
+                // Prisma sqlserver:// URL — pool is handled via individual env vars,
+                // do not append ADO.NET params or derive ConnectionStrings__.
+            } else {
+                // Generic ADO.NET style — apply pool then derive ConnectionStrings__
+                if (pool) env["DATABASE_URL"] = applyMssqlPool(env["DATABASE_URL"], pool);
+                env["ConnectionStrings__BenchmarkDatabase"] = env["DATABASE_URL"];
+            }
         } else {
-            // Both present — apply pool to each independently
+            // Both present — apply pool to ADO.NET strings only
             if (pool) {
-                env["DATABASE_URL"] = applyMssqlPool(env["DATABASE_URL"], pool);
+                if (!urlIsPrismaFormat) env["DATABASE_URL"] = applyMssqlPool(env["DATABASE_URL"], pool);
                 env["ConnectionStrings__BenchmarkDatabase"] = applyMssqlPool(env["ConnectionStrings__BenchmarkDatabase"], pool);
             }
         }

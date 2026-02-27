@@ -38,6 +38,8 @@ public static class DependencyInjectionExtensions
         builder.Services.AddScoped<ICreateManyUseCase, CreateManyUseCase>();
         builder.Services.AddScoped<IUpdateOneUseCase, UpdateOneUseCase>();
         builder.Services.AddScoped<IUpdateManyUseCase, UpdateManyUseCase>();
+        builder.Services.AddScoped<IDeleteOneUseCase, DeleteOneUseCase>();
+        builder.Services.AddScoped<IDeleteManyUseCase, DeleteManyUseCase>();
 
         return builder;
     }
