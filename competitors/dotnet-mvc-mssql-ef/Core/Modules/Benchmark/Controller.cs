@@ -27,9 +27,9 @@ public class BenchmarkController(
         OperationId = "GetPlaintext"
     )]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK, "text/plain")]
-    public string GetPlaintext()
+    public IActionResult GetPlaintext()
     {
-        return getPlaintext.Execute();
+        return Ok(getPlaintext.Execute());
     }
 
     [HttpGet("json-serialization")]
@@ -39,9 +39,9 @@ public class BenchmarkController(
         OperationId = "GetJson"
     )]
     [ProducesResponseType(typeof(GetJsonResponse), StatusCodes.Status200OK, "application/json")]
-    public GetJsonResponse GetJson()
+    public IActionResult GetJson()
     {
-        return getJson.Execute();
+        return Ok(getJson.Execute());
     }
 
     [HttpGet("read-one")]
@@ -51,9 +51,9 @@ public class BenchmarkController(
         OperationId = "ReadOne"
     )]
     [ProducesResponseType(typeof(ReadOneResponse), StatusCodes.Status200OK, "application/json")]
-    public Task<ReadOneResponse> ReadOne([FromQuery] ReadOneQuery query)
+    public IActionResult ReadOne([FromQuery] ReadOneQuery query)
     {
-        return getSingleRead.ExecuteAsync(query);
+        return Ok(getSingleRead.Execute(query));
     }
 
     [HttpGet("read-many")]
@@ -62,10 +62,14 @@ public class BenchmarkController(
         Description = "Returns a JSON array of records from the 'World' table using LIMIT and OFFSET.",
         OperationId = "ReadMany"
     )]
-    [ProducesResponseType(typeof(ReadManyResponse), StatusCodes.Status200OK, "application/json")]
-    public Task<ReadManyResponse> ReadMany([FromQuery] ReadManyQuery request)
+    [ProducesResponseType(
+        typeof(List<ReadOneResponse>),
+        StatusCodes.Status200OK,
+        "application/json"
+    )]
+    public IActionResult ReadMany([FromQuery] ReadManyQuery request)
     {
-        return getMultipleRead.ExecuteAsync(request);
+        return Ok(getMultipleRead.Execute(request));
     }
 
     [HttpPost("create-one")]
@@ -75,9 +79,9 @@ public class BenchmarkController(
         OperationId = "CreateOne"
     )]
     [ProducesResponseType(StatusCodes.Status201Created)]
-    public async Task<IActionResult> CreateOne([FromBody] CreateOneRequestBody request)
+    public IActionResult CreateOne([FromBody] CreateOneRequestBody request)
     {
-        await createOne.ExecuteAsync(request);
+        createOne.Execute(request);
         return Created();
     }
 
@@ -88,9 +92,9 @@ public class BenchmarkController(
         OperationId = "CreateMany"
     )]
     [ProducesResponseType(StatusCodes.Status201Created)]
-    public async Task<IActionResult> CreateMany([FromBody] CreateManyRequestBody request)
+    public IActionResult CreateMany([FromBody] CreateManyRequestBody request)
     {
-        await createMany.ExecuteAsync(request);
+        createMany.Execute(request);
         return Created();
     }
 
@@ -101,12 +105,12 @@ public class BenchmarkController(
         OperationId = "UpdateOne"
     )]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> UpdateOne(
+    public IActionResult UpdateOne(
         [FromRoute] UpdateOneParams query,
         [FromBody] UpdateOneRequestBody request
     )
     {
-        await updateOne.ExecuteAsync(query, request);
+        updateOne.Execute(query, request);
         return Ok();
     }
 
@@ -117,9 +121,9 @@ public class BenchmarkController(
         OperationId = "UpdateMany"
     )]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> UpdateMany([FromBody] UpdateManyRequestBody request)
+    public IActionResult UpdateMany([FromBody] UpdateManyRequestBody request)
     {
-        await updateMany.ExecuteAsync(request);
+        updateMany.Execute(request);
         return Ok();
     }
 
@@ -130,9 +134,9 @@ public class BenchmarkController(
         OperationId = "DeleteOne"
     )]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> DeleteOne([FromRoute] DeleteOneParams query)
+    public IActionResult DeleteOne([FromRoute] DeleteOneParams query)
     {
-        await deleteOne.ExecuteAsync(query);
+        deleteOne.Execute(query);
         return NoContent();
     }
 
@@ -143,9 +147,9 @@ public class BenchmarkController(
         OperationId = "DeleteMany"
     )]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> DeleteMany([FromBody] DeleteManyRequestBody request)
+    public IActionResult DeleteMany([FromBody] DeleteManyRequestBody request)
     {
-        await deleteMany.ExecuteAsync(request);
+        deleteMany.Execute(request);
         return NoContent();
     }
 }

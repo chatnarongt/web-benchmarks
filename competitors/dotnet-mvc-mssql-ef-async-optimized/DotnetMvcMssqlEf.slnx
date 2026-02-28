@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Core/Core.csproj" DefaultStartupProject="true" />
+  <Project Path="Database/Database.csproj" />
+</Solution>

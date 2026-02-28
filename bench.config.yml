@@ -11,8 +11,8 @@ competitors:
       DATABASE_USER: SA
       DATABASE_PASSWORD: Benchmark123!
       DATABASE_MIN_POOL_SIZE: "0"
-      DATABASE_MAX_POOL_SIZE: "500"
-      DATABASE_IDLE_TIMEOUT: "5000"
+      DATABASE_MAX_POOL_SIZE: "128"
+      DATABASE_IDLE_TIMEOUT: "30000"
       DATABASE_ENCRYPT: "false"
       DATABASE_TRUST_SERVER_CERTIFICATE: "true"
 
@@ -28,8 +28,8 @@ competitors:
       DATABASE_USER: SA
       DATABASE_PASSWORD: Benchmark123!
       DATABASE_MIN_POOL_SIZE: "0"
-      DATABASE_MAX_POOL_SIZE: "500"
-      DATABASE_IDLE_TIMEOUT: "5000"
+      DATABASE_MAX_POOL_SIZE: "128"
+      DATABASE_IDLE_TIMEOUT: "30000"
       DATABASE_ENCRYPT: "false"
       DATABASE_TRUST_SERVER_CERTIFICATE: "true"
 
@@ -37,8 +37,8 @@ competitors:
     database: mssql
     pool:
       minSize: 0
-      maxSize: 500
-      lifetime: 5
+      maxSize: 128
+      lifetime: 30
       encrypt: false
       trustServerCertificate: true
     env:
@@ -48,24 +48,54 @@ competitors:
         User Id=SA;
         Password=Benchmark123!;
 
-test: # With all default settings 1 test will take about 3.5 minutes, 1 competitor will take about 35 minutes
+  - name: dotnet-mvc-mssql-ef-async
+    database: mssql
+    pool:
+      minSize: 0
+      maxSize: 128
+      lifetime: 30
+      encrypt: false
+      trustServerCertificate: true
+    env:
+      ConnectionStrings__BenchmarkDatabase: >-
+        Server=mssql-service;
+        Database=Benchmark;
+        User Id=SA;
+        Password=Benchmark123!;
+
+  - name: dotnet-mvc-mssql-ef-async-optimized
+    database: mssql
+    pool:
+      minSize: 0
+      maxSize: 128
+      lifetime: 30
+      encrypt: false
+      trustServerCertificate: true
+    env:
+      ConnectionStrings__BenchmarkDatabase: >-
+        Server=mssql-service;
+        Database=Benchmark;
+        User Id=SA;
+        Password=Benchmark123!;
+
+test: # With all default settings 1 test will take about 1h 15m
   types:
-    # - plaintext
-    # - json-serialization
-    # - read-one
-    # - read-many
-    # - create-one
-    # - create-many
-    # - update-one
-    # - update-many
+    - plaintext
+    - json-serialization
+    - read-one
+    - read-many
+    - create-one
+    - create-many
+    - update-one
+    - update-many
     - delete-one
     - delete-many
   concurrency: 1 # Number of concurrent competitors tested (1 = sequentially)
-  vus: 500 # total number of virtual users to use for the test
-  duration: 10s # Default: 2m, duration of the test for each type, e.g. 2s, 2m, 2h
-  warmupDuration: 5s # Default: 1m, duration of the warm-up test before the actual benchmark
-  idleWaitDuration: 10s # Default: 45s, duration to wait after warmup before starting the actual test
-  databaseSettleDuration: 5m # Default: 30s, duration to wait for database to settle after deployment
+  vus: 256 # total number of virtual users to use for the test, maximum is 500
+  duration: 3m # Default: 3m, duration of the test for each type, e.g. 2s, 2m, 2h
+  warmupDuration: 1m # Default: 1m, duration of the warm-up test before the actual benchmark
+  idleWaitDuration: 45s # Default: 45s, duration to wait after warmup before starting the actual test
+  databaseSettleDuration: "auto" # Default: "auto". Will automatically set a settle duration based on how many rows seed due to VUs.
   logMode: "info" # "verbose", "info", "summary" or "silent"
 
 resources: # Resources for the competitors

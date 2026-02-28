@@ -1,0 +1,132 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run (Watch Mode)",
+      "icon": {
+        "id": "play-circle",
+        "color": "terminal.ansiGreen"
+      },
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "watch",
+        "run",
+        "--project",
+        "${workspaceFolder}/Core/Core.csproj"
+      ],
+      "isBackground": true,
+      "problemMatcher": [],
+    },
+    {
+      "label": "Format Code (CSharpier)",
+      "icon": {
+        "id": "paintcan",
+        "color": "terminal.ansiYellow"
+      },
+      "dependsOn": [
+        "Restore Dotnet Tools",
+      ],
+      "dependsOrder": "sequence",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "csharpier",
+        "format",
+        "${workspaceFolder}",
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "close": true
+      }
+    },
+    {
+      "label": "Scaffold Database (Benchmark)",
+      "icon": {
+        "id": "database",
+        "color": "terminal.ansiBlue"
+      },
+      "dependsOn": [
+        "Restore Dotnet Tools",
+        "Scaffold Benchmark Database",
+        "Format Code (CSharpier)"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "Scaffold Benchmark Database",
+      "command": "dotnet",
+      "type": "process",
+      "options": {
+        "cwd": "${workspaceFolder}/Core"
+      },
+      "args": [
+        "ef",
+        "dbcontext",
+        "scaffold",
+        "--no-onconfiguring",
+        "--no-pluralize",
+        "-f",
+        "-o",
+        "../Database/Benchmark",
+        "-n",
+        "Database.Benchmark",
+        "Name=BenchmarkDatabase",
+        "Microsoft.EntityFrameworkCore.SqlServer",
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true,
+      },
+      "problemMatcher": [],
+      "hide": true
+    },
+    {
+      "label": "Build Core",
+      "command": "dotnet",
+      "type": "process",
+      "options": {
+        "cwd": "${workspaceFolder}/Core"
+      },
+      "args": [
+        "build",
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": "$msCompile",
+      "hide": true
+    },
+    {
+      "label": "Restore Dotnet Tools",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "tool",
+        "restore"
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true,
+        "close": true
+      },
+      "problemMatcher": [],
+      "hide": true
+    }
+  ]
+}

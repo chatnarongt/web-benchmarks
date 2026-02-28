@@ -1,0 +1,112 @@
+{
+  "startTime": "2026-02-28T14:04:51.620Z",
+  "endTime": "2026-02-28T14:07:47.840Z",
+  "configs": {
+    "competitors": [
+      {
+        "name": "dotnet-mvc-mssql-ef-async-optimized",
+        "database": "mssql",
+        "pool": {
+          "minSize": 0,
+          "maxSize": 500,
+          "lifetime": 5,
+          "encrypt": false,
+          "trustServerCertificate": true
+        },
+        "env": {
+          "ConnectionStrings__BenchmarkDatabase": "Server=mssql-service; Database=Benchmark; User Id=SA; Password=Benchmark123!;"
+        }
+      }
+    ],
+    "test": {
+      "types": [
+        "read-one",
+        "read-many"
+      ],
+      "concurrency": 1,
+      "vus": 10,
+      "duration": "30s",
+      "warmupDuration": "10s",
+      "idleWaitDuration": "10s",
+      "databaseSettleDuration": "auto",
+      "logMode": "info"
+    },
+    "resources": {
+      "replicas": 1,
+      "requests": {
+        "cpu": "1",
+        "memory": "512Mi"
+      },
+      "limits": {
+        "cpu": "1",
+        "memory": "512Mi"
+      }
+    },
+    "databaseResources": {
+      "requests": {
+        "cpu": "4",
+        "memory": "8Gi"
+      },
+      "limits": {
+        "cpu": "4",
+        "memory": "8Gi"
+      }
+    }
+  },
+  "result": {
+    "dotnet-mvc-mssql-ef-async-optimized": {
+      "read-one": {
+        "totalRequests": 98787,
+        "requestsPerSecond": 3292.93,
+        "latencyAverageMs": 2.9576,
+        "latencyMaxMs": 101.5883,
+        "errorCount": 0,
+        "errorPercent": 0,
+        "cpuUsageIdle": 724,
+        "cpuUsagePeak": 998,
+        "memUsageIdle": 73,
+        "memUsagePeak": 79,
+        "cpuUsageIdlePercent": 72.4,
+        "cpuUsagePeakPercent": 99.8,
+        "memUsageIdlePercent": 14.26,
+        "memUsagePeakPercent": 15.43,
+        "dbConnectionCountIdle": 12,
+        "dbConnectionCountPeak": 12,
+        "dbCpuUsageIdle": 472,
+        "dbCpuUsagePeak": 584,
+        "dbMemUsageIdle": 1178,
+        "dbMemUsagePeak": 1181,
+        "dbCpuUsageIdlePercent": 11.8,
+        "dbCpuUsagePeakPercent": 14.6,
+        "dbMemUsageIdlePercent": 14.38,
+        "dbMemUsagePeakPercent": 14.42
+      },
+      "read-many": {
+        "totalRequests": 105396,
+        "requestsPerSecond": 3513.11,
+        "latencyAverageMs": 2.7638,
+        "latencyMaxMs": 60.4827,
+        "errorCount": 0,
+        "errorPercent": 0,
+        "cpuUsageIdle": 278,
+        "cpuUsagePeak": 997,
+        "memUsageIdle": 88,
+        "memUsagePeak": 92,
+        "cpuUsageIdlePercent": 27.8,
+        "cpuUsagePeakPercent": 99.7,
+        "memUsageIdlePercent": 17.19,
+        "memUsagePeakPercent": 17.97,
+        "dbConnectionCountIdle": 12,
+        "dbConnectionCountPeak": 12,
+        "dbCpuUsageIdle": 745,
+        "dbCpuUsagePeak": 2633,
+        "dbMemUsageIdle": 1183,
+        "dbMemUsagePeak": 1185,
+        "dbCpuUsageIdlePercent": 18.63,
+        "dbCpuUsagePeakPercent": 65.83,
+        "dbMemUsageIdlePercent": 14.44,
+        "dbMemUsagePeakPercent": 14.47
+      }
+    }
+  }
+}

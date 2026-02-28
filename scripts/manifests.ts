@@ -56,12 +56,13 @@ spec:
 `;
 }
 
-export function generatePostgresManifest(resources: any, suffix: string = ""): string {
+export function generatePostgresManifest(resources: any, suffix: string = "", vus: number = 500): string {
   const nameSuffix = suffix ? `-${suffix}` : "";
   const deploymentName = `postgres-deployment${nameSuffix}`;
   const serviceName = `postgres-service${nameSuffix}`;
   const configMapName = `postgres-init-script${nameSuffix}`;
   const appLabel = `postgres${nameSuffix}`;
+  const tempRows = vus * 200_000;
 
   return `
 ---
@@ -83,7 +84,7 @@ data:
       id SERIAL PRIMARY KEY,
       randomNumber INTEGER NOT NULL
     );
-    INSERT INTO Temp (randomNumber) SELECT floor(random() * 10000 + 1) FROM generate_series(1, 100000000);
+    INSERT INTO Temp (randomNumber) SELECT floor(random() * 10000 + 1) FROM generate_series(1, ${tempRows});
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -138,12 +139,13 @@ spec:
 `;
 }
 
-export function generateMssqlManifest(resources: any, suffix: string = ""): string {
+export function generateMssqlManifest(resources: any, suffix: string = "", vus: number = 500): string {
   const nameSuffix = suffix ? `-${suffix}` : "";
   const deploymentName = `mssql-deployment${nameSuffix}`;
   const serviceName = `mssql-service${nameSuffix}`;
   const configMapName = `mssql-init-script${nameSuffix}`;
   const appLabel = `mssql${nameSuffix}`;
+  const tempRows = vus * 200_000;
 
   return `
 ---
@@ -182,7 +184,7 @@ data:
             randomNumber INT NOT NULL
         );
         INSERT INTO Temp (randomNumber)
-        SELECT TOP 100000000 ABS(CHECKSUM(NEWID())) % 10000 + 1
+        SELECT TOP (${tempRows}) ABS(CHECKSUM(NEWID())) % 10000 + 1
         FROM sys.all_objects a
         CROSS JOIN sys.all_objects b
         CROSS JOIN sys.all_objects c;

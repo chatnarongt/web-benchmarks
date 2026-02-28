@@ -59,9 +59,13 @@ async function main() {
 
         for (const competitorConfig of config.competitors) {
             const competitor = competitorConfig.name;
+            // Match against the exact prefixes we now generate
+            const warmupPrefix = `k6-w-${competitor}-`.substring(0, 50).toLowerCase();
+            const testPrefix = `k6-t-${competitor}-`.substring(0, 50).toLowerCase();
+
             const competitorPods = allPods.filter(p =>
-                p.startsWith(`k6-warmup-${competitor}-`) ||
-                p.startsWith(`k6-test-${competitor}-`)
+                p.startsWith(warmupPrefix) ||
+                p.startsWith(testPrefix)
             );
             podsToDelete.push(...competitorPods);
         }

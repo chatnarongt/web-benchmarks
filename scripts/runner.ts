@@ -62,10 +62,26 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
     const dbServiceName = dbType ? `${dbType}-service-${dbSuffix}` : "";
     const dbAppLabel = dbType ? `${dbType}-${dbSuffix}` : "";
 
+    // 1. Build Docker Image
+    console.info(`[${competitor}] 🐳 Building Docker image...`);
+    const buildArgs: string[] = [];
+    if (competitorConfig.env) {
+      for (const [key, value] of Object.entries(competitorConfig.env)) {
+        buildArgs.push("--build-arg");
+        buildArgs.push(`${key}=${value}`);
+      }
+    }
+    if (isVerbose) {
+      await $`docker build ${buildArgs} -t ${competitor}:benchmark ./competitors/${competitor}`;
+    } else {
+      await $`docker build ${buildArgs} -t ${competitor}:benchmark ./competitors/${competitor}`.quiet();
+    }
+    console.info(`[${competitor}] ✅ Docker image built successfully.`);
+
     // 2. Deploy required database for this competitor
     if (dbType === "postgres") {
       console.info(`[${competitor}] ☸️  Deploying PostgreSQL database (${dbServiceName})...`);
-      const pgManifest = generatePostgresManifest(config.databaseResources, dbSuffix);
+      const pgManifest = generatePostgresManifest(config.databaseResources, dbSuffix, config.test.vus);
       const pgManifestPath = `/tmp/postgres-manifest-${dbSuffix}.yml`;
       fs.writeFileSync(pgManifestPath, pgManifest);
       if (isVerbose) {
@@ -82,7 +98,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       console.info(`[${competitor}] ✅ PostgreSQL ready.`);
     } else if (dbType === "mssql") {
       console.info(`[${competitor}] ☸️  Deploying MSSQL database (${dbServiceName})...`);
-      const mssqlManifest = generateMssqlManifest(config.databaseResources, dbSuffix);
+      const mssqlManifest = generateMssqlManifest(config.databaseResources, dbSuffix, config.test.vus);
       const mssqlManifestPath = `/tmp/mssql-manifest-${dbSuffix}.yml`;
       fs.writeFileSync(mssqlManifestPath, mssqlManifest);
       if (isVerbose) {
@@ -101,27 +117,24 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
 
     // Wait for the database to settle if one was deployed
     if (dbType) {
-      const settleDurationStr = config.test.databaseSettleDuration || (dbType === "mssql" ? "30s" : "15s");
-      const settleTimeMs = parseTimeToSeconds(settleDurationStr) * 1000;
+      let settleTimeMs = 0;
+      let settleDurationStr = config.test.databaseSettleDuration;
+
+      if (!settleDurationStr || settleDurationStr === 'auto') {
+        // Base setup time
+        const baseDelayMs = dbType === "mssql" ? 20000 : 10000;
+        // 200k rows takes ~0.5 - 1s to seed in MSSQL. Add 800ms per VU to be safe.
+        const perVuDelayMs = config.test.vus * 800;
+
+        settleTimeMs = baseDelayMs + perVuDelayMs;
+        settleDurationStr = `${Math.ceil(settleTimeMs / 1000)}s (dynamic based on ${config.test.vus} VUs)`;
+      } else {
+        settleTimeMs = parseTimeToSeconds(settleDurationStr) * 1000;
+      }
+
       console.debug(`[${competitor}] ⏳ Waiting ${settleDurationStr} for database to settle...`);
       await new Promise(resolve => setTimeout(resolve, settleTimeMs));
     }
-
-    // 3. Build Docker Image
-    console.info(`[${competitor}] 🐳 Building Docker image...`);
-    const buildArgs: string[] = [];
-    if (competitorConfig.env) {
-      for (const [key, value] of Object.entries(competitorConfig.env)) {
-        buildArgs.push("--build-arg");
-        buildArgs.push(`${key}=${value}`);
-      }
-    }
-    if (isVerbose) {
-      await $`docker build ${buildArgs} -t ${competitor}:benchmark ./competitors/${competitor}`;
-    } else {
-      await $`docker build ${buildArgs} -t ${competitor}:benchmark ./competitors/${competitor}`.quiet();
-    }
-    console.info(`[${competitor}] ✅ Docker image built successfully.`);
 
     // 4 & 5. Generate and Apply Kubernetes Manifests
     console.debug('');
@@ -180,11 +193,15 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       const warmupDuration = config.test.warmupDuration || "30s";
       const warmupSecs = parseTimeToSeconds(warmupDuration);
       const scriptContent = fs.readFileSync("./scripts/k6-test.ts", "utf8");
+
+      const rawWarmupName = `k6-w-${competitor}-${sanitizedTestType}`;
+      const warmupPodName = rawWarmupName.substring(0, 63).replace(/-+$/, '').toLowerCase();
+
       if (warmupSecs > 0) {
         console.debug('');
         console.info(`[${competitor}] 🔥 Warming up for '${testType}' (${warmupDuration})...`);
         try {
-          await $`echo ${scriptContent} | kubectl run k6-warmup-${competitor}-${sanitizedTestType} --rm -i \
+          await $`echo ${scriptContent} | kubectl run ${warmupPodName} --rm -i \
                         --image=grafana/k6 \
                         --restart=Never \
                         -- run -e TARGET_URL=${targetUrl} -e TEST_TYPE=${testType} --vus=${config.test.vus} --duration=${warmupSecs}s -`.quiet();
@@ -212,6 +229,9 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       console.debug(`[${competitor}] 💤 Idle Metrics -> App CPU: ${idleMetrics.cpu}m, App RAM: ${idleMetrics.memory}Mi | DB CPU: ${idleDbMetrics.cpu}m, DB RAM: ${idleDbMetrics.memory}Mi, Connections: ${idleConnections}`);
 
       // --- ACTUAL TEST PHASE ---
+      const rawTestName = `k6-t-${competitor}-${sanitizedTestType}`;
+      const testPodName = rawTestName.substring(0, 63).replace(/-+$/, '').toLowerCase();
+
       console.info(`[${competitor}] 🧨 Running load test '${testType}' with 'k6' for ${config.test.duration}...`);
 
       // Run k6 and capture output. We run it as a standalone Pod passing script via stdin.
@@ -220,7 +240,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       console.debug(`[${competitor}] Executing: ${k6Command} from inside cluster...`);
 
       // Ensure any leftover pod is deleted
-      await $`kubectl delete pod k6-test-${competitor}-${sanitizedTestType} --ignore-not-found`.quiet();
+      await $`kubectl delete pod ${testPodName} --ignore-not-found`.quiet();
 
       // Start tracking peak metrics in the background.
       // Seed with idle values so that if kubectl top transiently fails during
@@ -246,7 +266,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
         if (c !== undefined && peakConnections !== undefined && c > peakConnections) peakConnections = c;
       }, 1000);
 
-      const testOutput = await $`echo ${scriptContent} | kubectl run k6-test-${competitor}-${sanitizedTestType} --rm -i \
+      const testOutput = await $`echo ${scriptContent} | kubectl run ${testPodName} --rm -i \
           --image=grafana/k6 \
           --restart=Never \
           -- run --log-output=stdout -e TARGET_URL=${targetUrl} -e TEST_TYPE=${testType} --vus=${config.test.vus} --duration=${testDurationSecs}s -`.text();
