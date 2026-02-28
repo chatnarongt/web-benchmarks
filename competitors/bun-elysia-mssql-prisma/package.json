@@ -1,5 +1,5 @@
 {
-  "name": "bun-elysia-mssql",
+  "name": "bun-elysia-mssql-prisma",
   "version": "1.0.0",
   "private": true,
   "module": "src/index.js",
