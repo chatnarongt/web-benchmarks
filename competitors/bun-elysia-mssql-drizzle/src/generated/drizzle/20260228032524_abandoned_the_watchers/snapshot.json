@@ -1,0 +1,87 @@
+{
+  "dialect": "mssql",
+  "id": "ec6a4793-c46e-4d9e-98d7-e2fd723b13f7",
+  "prevIds": [
+    "00000000-0000-0000-0000-000000000000"
+  ],
+  "version": "2",
+  "ddl": [
+    {
+      "name": "Temp",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "name": "World",
+      "entityType": "tables",
+      "schema": "dbo"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "generated": null,
+      "identity": {
+        "increment": 1,
+        "seed": 1
+      },
+      "name": "id",
+      "entityType": "columns",
+      "schema": "dbo",
+      "table": "World"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "randomNumber",
+      "entityType": "columns",
+      "schema": "dbo",
+      "table": "World"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "generated": null,
+      "identity": {
+        "increment": 1,
+        "seed": 1
+      },
+      "name": "id",
+      "entityType": "columns",
+      "schema": "dbo",
+      "table": "Temp"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "generated": null,
+      "identity": null,
+      "name": "randomNumber",
+      "entityType": "columns",
+      "schema": "dbo",
+      "table": "Temp"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "id"
+      ],
+      "name": "PK__Temp__3213E83F38F60023",
+      "entityType": "pks",
+      "schema": "dbo",
+      "table": "Temp"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        "id"
+      ],
+      "name": "PK__World__3213E83FD26C5AB2",
+      "entityType": "pks",
+      "schema": "dbo",
+      "table": "World"
+    }
+  ],
+  "renames": []
+}

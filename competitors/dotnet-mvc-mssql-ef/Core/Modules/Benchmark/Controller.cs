@@ -74,10 +74,11 @@ public class BenchmarkController(
         Description = "Creates a new record in the 'Temp' table with a random number.",
         OperationId = "CreateOne"
     )]
-    [ProducesResponseType(typeof(CreateOneResponse), StatusCodes.Status200OK, "application/json")]
-    public Task<CreateOneResponse> CreateOne([FromBody] CreateOneRequestBody request)
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    public async Task<IActionResult> CreateOne([FromBody] CreateOneRequestBody request)
     {
-        return createOne.ExecuteAsync(request);
+        await createOne.ExecuteAsync(request);
+        return Created();
     }
 
     [HttpPost("create-many")]
@@ -86,10 +87,11 @@ public class BenchmarkController(
         Description = "Creates multiple new records in the 'Temp' table with random numbers.",
         OperationId = "CreateMany"
     )]
-    [ProducesResponseType(typeof(CreateManyResponse), StatusCodes.Status200OK, "application/json")]
-    public Task<CreateManyResponse> CreateMany([FromBody] CreateManyRequestBody request)
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    public async Task<IActionResult> CreateMany([FromBody] CreateManyRequestBody request)
     {
-        return createMany.ExecuteAsync(request);
+        await createMany.ExecuteAsync(request);
+        return Created();
     }
 
     [HttpPatch("update-one/{id:int}")]
@@ -98,13 +100,14 @@ public class BenchmarkController(
         Description = "Updates a single record in the 'World' table with a random number.",
         OperationId = "UpdateOne"
     )]
-    [ProducesResponseType(typeof(UpdateOneResponse), StatusCodes.Status200OK, "application/json")]
-    public Task<UpdateOneResponse> UpdateOne(
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateOne(
         [FromRoute] UpdateOneParams query,
         [FromBody] UpdateOneRequestBody request
     )
     {
-        return updateOne.ExecuteAsync(query, request);
+        await updateOne.ExecuteAsync(query, request);
+        return Ok();
     }
 
     [HttpPut("update-many")]
@@ -113,10 +116,11 @@ public class BenchmarkController(
         Description = "Updates multiple records in the 'World' table with random numbers.",
         OperationId = "UpdateMany"
     )]
-    [ProducesResponseType(typeof(UpdateManyResponse), StatusCodes.Status200OK, "application/json")]
-    public Task<UpdateManyResponse> UpdateMany([FromBody] UpdateManyRequestBody request)
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateMany([FromBody] UpdateManyRequestBody request)
     {
-        return updateMany.ExecuteAsync(request);
+        await updateMany.ExecuteAsync(request);
+        return Ok();
     }
 
     [HttpDelete("delete-one/{id:int}")]

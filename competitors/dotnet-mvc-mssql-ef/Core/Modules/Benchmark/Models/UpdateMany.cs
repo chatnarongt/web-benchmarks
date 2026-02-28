@@ -20,8 +20,3 @@ public class UpdateManyRequestBody
     [UniqueBy(nameof(UpdateItem.Id))]
     public List<UpdateItem> Items { get; set; } = [];
 }
-
-public class UpdateManyResponse
-{
-    public List<UpdateItem> Items { get; set; } = [];
-}

@@ -6,14 +6,14 @@ namespace Core.Modules.Benchmark.UseCases;
 
 public interface IUpdateManyUseCase
 {
-    UpdateManyResponse Execute(UpdateManyRequestBody request);
+    void Execute(UpdateManyRequestBody request);
 
-    Task<UpdateManyResponse> ExecuteAsync(UpdateManyRequestBody request);
+    Task ExecuteAsync(UpdateManyRequestBody request);
 }
 
 public class UpdateManyUseCase(BenchmarkContext db) : IUpdateManyUseCase
 {
-    public UpdateManyResponse Execute(UpdateManyRequestBody request)
+    public void Execute(UpdateManyRequestBody request)
     {
         var count = request.Items.Count;
         var ids = request.Items.Select(x => x.Id).ToList();
@@ -29,11 +29,9 @@ public class UpdateManyUseCase(BenchmarkContext db) : IUpdateManyUseCase
         }
 
         db.SaveChanges();
-
-        return new UpdateManyResponse { Items = request.Items };
     }
 
-    public async Task<UpdateManyResponse> ExecuteAsync(UpdateManyRequestBody request)
+    public async Task ExecuteAsync(UpdateManyRequestBody request)
     {
         var count = request.Items.Count;
         var ids = request.Items.Select(x => x.Id).ToList();
@@ -52,7 +50,5 @@ public class UpdateManyUseCase(BenchmarkContext db) : IUpdateManyUseCase
 
         // 3. Batch save the changes
         await db.SaveChangesAsync();
-
-        return new UpdateManyResponse { Items = request.Items };
     }
 }

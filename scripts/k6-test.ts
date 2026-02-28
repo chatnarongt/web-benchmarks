@@ -5,6 +5,27 @@ import { check } from 'k6';
 const TARGET_URL: string = __ENV.TARGET_URL || 'http://localhost:3000';
 const TEST_TYPE: string = __ENV.TEST_TYPE || 'plaintext';
 
+// Expected HTTP status code per test type
+const EXPECTED_STATUS: Record<string, number> = {
+    'plaintext': 200,
+    'json-serialization': 200,
+    'read-one': 200,
+    'read-many': 200,
+    'create-one': 201,
+    'create-many': 201,
+    'update-one': 200,
+    'update-many': 200,
+    'delete-one': 204,
+    'delete-many': 204,
+};
+
+// Test types whose responses must have no body
+const NO_BODY_TESTS = new Set<string>([
+    'create-one', 'create-many',
+    'update-one', 'update-many',
+    'delete-one', 'delete-many',
+]);
+
 // Per-VU deduplication set — each VU has its own JS context so this is isolated.
 // We emit at most one K6_ERROR_SAMPLE line per unique (status + body) per VU.
 const _seenErrors = new Set<string>();
@@ -79,9 +100,14 @@ export default function (): void {
     }
 
     if (res) {
-        const ok = check(res, {
-            'is status 2xx': (r: any) => r.status >= 200 && r.status < 300,
-        });
+        const expectedStatus = EXPECTED_STATUS[TEST_TYPE] ?? 200;
+        const checks: Record<string, (r: any) => boolean> = {
+            [`is status ${expectedStatus}`]: (r: any) => r.status === expectedStatus,
+        };
+        if (NO_BODY_TESTS.has(TEST_TYPE)) {
+            checks['has no response body'] = (r: any) => r.body === null || r.body === '' || r.body === undefined;
+        }
+        const ok = check(res, checks);
         if (!ok) {
             const body = String(res.body ?? '').substring(0, 500);
             const key = `${res.status}:${body}`;

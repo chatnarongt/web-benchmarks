@@ -4,9 +4,10 @@ import { PrismaMssql } from '@prisma/adapter-mssql';
 
 const adapter = new PrismaMssql({
   server: env.DATABASE_HOST,
-  database: env.DATABASE_NAME,
+  port: 1433,
   user: env.DATABASE_USER,
   password: env.DATABASE_PASSWORD,
+  database: env.DATABASE_NAME,
   pool: {
     min: env.DATABASE_MIN_POOL_SIZE,
     max: env.DATABASE_MAX_POOL_SIZE,

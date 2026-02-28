@@ -1,4 +1,21 @@
 competitors:
+  - name: bun-elysia-mssql-drizzle
+    database: mssql
+    env:
+      APP_ENV: production
+      APP_PORT: "3000"
+      DATABASE_URL: >-
+        sqlserver://mssql-service:1433;Database=Benchmark;user=SA;password=Benchmark123!;encrypt=false;trustServerCertificate=true;
+      DATABASE_HOST: mssql-service
+      DATABASE_NAME: Benchmark
+      DATABASE_USER: SA
+      DATABASE_PASSWORD: Benchmark123!
+      DATABASE_MIN_POOL_SIZE: "0"
+      DATABASE_MAX_POOL_SIZE: "500"
+      DATABASE_IDLE_TIMEOUT: "5000"
+      DATABASE_ENCRYPT: "false"
+      DATABASE_TRUST_SERVER_CERTIFICATE: "true"
+
   - name: bun-elysia-mssql-prisma
     database: mssql
     env:
@@ -12,17 +29,16 @@ competitors:
       DATABASE_PASSWORD: Benchmark123!
       DATABASE_MIN_POOL_SIZE: "0"
       DATABASE_MAX_POOL_SIZE: "500"
-      DATABASE_IDLE_TIMEOUT: "30000"
+      DATABASE_IDLE_TIMEOUT: "5000"
       DATABASE_ENCRYPT: "false"
       DATABASE_TRUST_SERVER_CERTIFICATE: "true"
 
   - name: dotnet-mvc-mssql-ef
     database: mssql
     pool:
-      maxSize: 500
       minSize: 0
-      lifetime: 30
-      timeout: 30
+      maxSize: 500
+      lifetime: 5
       encrypt: false
       trustServerCertificate: true
     env:
@@ -34,22 +50,22 @@ competitors:
 
 test: # With all default settings 1 test will take about 3.5 minutes, 1 competitor will take about 35 minutes
   types:
-    - plaintext
-    - json-serialization
-    - read-one
-    - read-many
-    - create-one
-    - create-many
-    - update-one
-    - update-many
+    # - plaintext
+    # - json-serialization
+    # - read-one
+    # - read-many
+    # - create-one
+    # - create-many
+    # - update-one
+    # - update-many
     - delete-one
     - delete-many
   concurrency: 1 # Number of concurrent competitors tested (1 = sequentially)
-  vus: 128 # total number of virtual users to use for the test
-  duration: 45s # Default: 2m, duration of the test for each type, e.g. 2s, 2m, 2h
-  warmupDuration: 1m # Default: 1m, duration of the warm-up test before the actual benchmark
-  idleWaitDuration: 45s # Default: 45s, duration to wait after warmup before starting the actual test
-  databaseSettleDuration: 30s # Default: 30s, duration to wait for database to settle after deployment
+  vus: 500 # total number of virtual users to use for the test
+  duration: 10s # Default: 2m, duration of the test for each type, e.g. 2s, 2m, 2h
+  warmupDuration: 5s # Default: 1m, duration of the warm-up test before the actual benchmark
+  idleWaitDuration: 10s # Default: 45s, duration to wait after warmup before starting the actual test
+  databaseSettleDuration: 5m # Default: 30s, duration to wait for database to settle after deployment
   logMode: "info" # "verbose", "info", "summary" or "silent"
 
 resources: # Resources for the competitors
@@ -64,7 +80,7 @@ resources: # Resources for the competitors
 databaseResources: # Resources for the database
   requests:
     cpu: "4"
-    memory: "4Gi"
+    memory: "8Gi"
   limits:
     cpu: "4"
-    memory: "4Gi"
+    memory: "8Gi"

@@ -11,5 +11,3 @@ public class CreateOneRequestBody
     [SwaggerSchema("A random number between 1 and 10,000.")]
     public int RandomNumber { get; set; }
 }
-
-public class CreateOneResponse : WorldAnnotated;

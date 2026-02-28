@@ -6,14 +6,14 @@ namespace Core.Modules.Benchmark.UseCases;
 
 public interface IUpdateOneUseCase
 {
-    UpdateOneResponse Execute(UpdateOneParams query, UpdateOneRequestBody request);
+    void Execute(UpdateOneParams query, UpdateOneRequestBody request);
 
-    Task<UpdateOneResponse> ExecuteAsync(UpdateOneParams query, UpdateOneRequestBody request);
+    Task ExecuteAsync(UpdateOneParams query, UpdateOneRequestBody request);
 }
 
 public class UpdateOneUseCase(BenchmarkContext db) : IUpdateOneUseCase
 {
-    public UpdateOneResponse Execute(UpdateOneParams query, UpdateOneRequestBody request)
+    public void Execute(UpdateOneParams query, UpdateOneRequestBody request)
     {
         var rowAffected = db
             .World.Where(w => w.Id == query.Id)
@@ -23,14 +23,9 @@ public class UpdateOneUseCase(BenchmarkContext db) : IUpdateOneUseCase
         {
             throw new BadHttpRequestException($"World with ID {query.Id} not found.");
         }
-
-        return new UpdateOneResponse { Id = query.Id, RandomNumber = request.RandomNumber };
     }
 
-    public async Task<UpdateOneResponse> ExecuteAsync(
-        UpdateOneParams query,
-        UpdateOneRequestBody request
-    )
+    public async Task ExecuteAsync(UpdateOneParams query, UpdateOneRequestBody request)
     {
         var rowAffected = await db
             .World.Where(w => w.Id == query.Id)
@@ -40,7 +35,5 @@ public class UpdateOneUseCase(BenchmarkContext db) : IUpdateOneUseCase
         {
             throw new BadHttpRequestException($"World with ID {query.Id} not found.");
         }
-
-        return new UpdateOneResponse { Id = query.Id, RandomNumber = request.RandomNumber };
     }
 }

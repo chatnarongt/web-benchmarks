@@ -5,24 +5,22 @@ namespace Core.Modules.Benchmark.UseCases;
 
 public interface ICreateOneUseCase
 {
-    CreateOneResponse Execute(CreateOneRequestBody request);
+    void Execute(CreateOneRequestBody request);
 
-    Task<CreateOneResponse> ExecuteAsync(CreateOneRequestBody request);
+    Task ExecuteAsync(CreateOneRequestBody request);
 }
 
 public class CreateOneUseCase(BenchmarkContext db) : ICreateOneUseCase
 {
-    public CreateOneResponse Execute(CreateOneRequestBody request)
+    public void Execute(CreateOneRequestBody request)
     {
         var temp = new Temp { RandomNumber = request.RandomNumber };
 
         db.Temp.Add(temp);
         db.SaveChanges();
-
-        return new CreateOneResponse { Id = temp.Id, RandomNumber = temp.RandomNumber };
     }
 
-    public async Task<CreateOneResponse> ExecuteAsync(CreateOneRequestBody request)
+    public async Task ExecuteAsync(CreateOneRequestBody request)
     {
         var temp = new Temp { RandomNumber = request.RandomNumber };
 
@@ -38,7 +36,5 @@ public class CreateOneUseCase(BenchmarkContext db) : ICreateOneUseCase
         {
             db.ChangeTracker.AutoDetectChangesEnabled = true;
         }
-
-        return new CreateOneResponse { Id = temp.Id, RandomNumber = temp.RandomNumber };
     }
 }

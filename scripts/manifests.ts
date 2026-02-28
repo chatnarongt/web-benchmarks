@@ -83,7 +83,7 @@ data:
       id SERIAL PRIMARY KEY,
       randomNumber INTEGER NOT NULL
     );
-    INSERT INTO Temp (randomNumber) SELECT floor(random() * 10000 + 1) FROM generate_series(1, 10000000);
+    INSERT INTO Temp (randomNumber) SELECT floor(random() * 10000 + 1) FROM generate_series(1, 100000000);
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -182,7 +182,7 @@ data:
             randomNumber INT NOT NULL
         );
         INSERT INTO Temp (randomNumber)
-        SELECT TOP 10000000 ABS(CHECKSUM(NEWID())) % 10000 + 1
+        SELECT TOP 100000000 ABS(CHECKSUM(NEWID())) % 10000 + 1
         FROM sys.all_objects a
         CROSS JOIN sys.all_objects b
         CROSS JOIN sys.all_objects c;

@@ -19,5 +19,3 @@ public class UpdateOneRequestBody
     [SwaggerSchema("The random number to update.")]
     public int RandomNumber { get; set; }
 }
-
-public class UpdateOneResponse : WorldAnnotated;

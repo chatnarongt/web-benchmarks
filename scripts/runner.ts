@@ -34,6 +34,15 @@ console.error = (...args: any[]) => {
   if (currentLogMode === "silent") originalError(...args);
 };
 
+function formatDuration(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return [h > 0 ? `${h}h` : '', m > 0 ? `${m}m` : '', `${s}s`]
+    .filter(Boolean)
+    .join(' ');
+}
+
 async function runCompetitor(competitorConfig: CompetitorConfig, config: BenchmarkConfig, finalReport: Record<string, any>) {
   const isVerbose = config.test.logMode === "verbose";
   const competitor = competitorConfig.name;
@@ -47,6 +56,7 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
   finalReport[competitor] = {};
 
   try {
+    const competitorStartTime = Date.now();
     const dbSuffix = suffix;
     const dbDeploymentName = dbType ? `${dbType}-deployment-${dbSuffix}` : "";
     const dbServiceName = dbType ? `${dbType}-service-${dbSuffix}` : "";
@@ -269,6 +279,8 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
     }
 
     console.log(`[${competitor}] ✅ All tests complete.`);
+    console.log(`======================================================`);
+    console.log(`[${competitor}] 🏁 Completed in ${formatDuration(Math.round((Date.now() - competitorStartTime) / 1000))}.`);
     console.log(`======================================================`);
   } catch (error) {
     console.error(`[${competitor}] ❌ Benchmark failed:`, error);
