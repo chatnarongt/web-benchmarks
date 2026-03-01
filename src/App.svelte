@@ -73,6 +73,9 @@
     // Update
     "update-one": "Update One",
     "update-many": "Update Many",
+    // Delete
+    "delete-one": "Delete One",
+    "delete-many": "Delete Many",
   };
 
   function getReportLabel(filename: string) {

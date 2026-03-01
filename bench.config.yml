@@ -78,7 +78,7 @@ competitors:
         User Id=SA;
         Password=Benchmark123!;
 
-test: # With all default settings 1 test will take about 1h 15m
+test:
   types:
     - plaintext
     - json-serialization
@@ -94,7 +94,7 @@ test: # With all default settings 1 test will take about 1h 15m
   vus: 256 # total number of virtual users to use for the test, maximum is 500
   duration: 3m # Default: 3m, duration of the test for each type, e.g. 2s, 2m, 2h
   warmupDuration: 1m # Default: 1m, duration of the warm-up test before the actual benchmark
-  idleWaitDuration: 45s # Default: 45s, duration to wait after warmup before starting the actual test
+  idleWaitDuration: 1m # Default: 1m, duration to wait after warmup before starting the actual test
   databaseSettleDuration: "auto" # Default: "auto". Will automatically set a settle duration based on how many rows seed due to VUs.
   logMode: "info" # "verbose", "info", "summary" or "silent"
 

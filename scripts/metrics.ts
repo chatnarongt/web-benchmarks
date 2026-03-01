@@ -7,7 +7,7 @@ import { $ } from "bun";
 //   RAM  as "128Mi" (MiB) or "1Gi" (GiB)
 export async function getPodMetrics(label: string): Promise<{ cpu: number, memory: number }> {
     try {
-        const topOutput = await $`kubectl top pod -l app=${label} --no-headers`.text();
+        const topOutput = await $`timeout 5s kubectl top pod -l app=${label} --no-headers`.text();
         const lines = topOutput.trim().split("\n");
         if (lines.length > 0 && lines[0]) {
             const parts = lines[0].trim().split(/\s+/);
@@ -72,14 +72,14 @@ export async function getDbConnectionCount(
 
         // Resolve the app pod's IP so we can filter connections by source
         const appPodIp = (
-            await $`kubectl get pod -l app=${appLabel} -o jsonpath='{.items[0].status.podIP}'`.text()
+            await $`timeout 5s kubectl get pod -l app=${appLabel} -o jsonpath='{.items[0].status.podIP}'`.text()
         ).trim().replace(/'/g, '');
 
         if (!appPodIp) return 0;
 
         const appIpHex = ipToHex(appPodIp);
 
-        const output = await $`kubectl exec deployment/${dbDeploymentName} -- sh -c "cat /proc/net/tcp /proc/net/tcp6 2>/dev/null || netstat -tan 2>/dev/null || ss -tan 2>/dev/null"`.text();
+        const output = await $`timeout 5s kubectl exec deployment/${dbDeploymentName} -- sh -c "cat /proc/net/tcp /proc/net/tcp6 2>/dev/null || netstat -tan 2>/dev/null || ss -tan 2>/dev/null"`.text();
         const lines = output.trim().split("\n");
 
         if (lines.length === 0) return 0;

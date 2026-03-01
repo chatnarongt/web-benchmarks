@@ -200,9 +200,11 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       if (warmupSecs > 0) {
         console.debug('');
         console.info(`[${competitor}] 🔥 Warming up for '${testType}' (${warmupDuration})...`);
+        const podTimeoutSecs = Math.max(warmupSecs + 300, 300);
         try {
           await $`echo ${scriptContent} | kubectl run ${warmupPodName} --rm -i \
                         --image=grafana/k6 \
+                        --pod-running-timeout=${podTimeoutSecs}s \
                         --restart=Never \
                         -- run -e TARGET_URL=${targetUrl} -e TEST_TYPE=${testType} --vus=${config.test.vus} --duration=${warmupSecs}s -`.quiet();
         } catch (e) {
@@ -252,27 +254,37 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       let peakConnections = idleConnections;
       let testRunning = true;
 
-      const metricInterval = setInterval(async () => {
-        if (!testRunning) return;
-        const [m, dbM, c] = await Promise.all([
-          getPodMetrics(competitor),
-          dbType ? getPodMetrics(dbAppLabel) : Promise.resolve({ cpu: 0, memory: 0 }),
-          dbType ? getDbConnectionCount(dbDeploymentName, dbType, competitor) : Promise.resolve(0)
-        ]);
-        if (m.cpu > peakCpu) peakCpu = m.cpu;
-        if (m.memory > peakMemory) peakMemory = m.memory;
-        if (dbM.cpu > peakDbCpu) peakDbCpu = dbM.cpu;
-        if (dbM.memory > peakDbMemory) peakDbMemory = dbM.memory;
-        if (c !== undefined && peakConnections !== undefined && c > peakConnections) peakConnections = c;
-      }, 1000);
+      const metricLoop = async () => {
+        while (testRunning) {
+          try {
+            const [m, dbM, c] = await Promise.all([
+              getPodMetrics(competitor),
+              dbType ? getPodMetrics(dbAppLabel) : Promise.resolve({ cpu: 0, memory: 0 }),
+              dbType ? getDbConnectionCount(dbDeploymentName, dbType, competitor) : Promise.resolve(0)
+            ]);
+            if (!testRunning) break;
+            if (m.cpu > peakCpu) peakCpu = m.cpu;
+            if (m.memory > peakMemory) peakMemory = m.memory;
+            if (dbM.cpu > peakDbCpu) peakDbCpu = dbM.cpu;
+            if (dbM.memory > peakDbMemory) peakDbMemory = dbM.memory;
+            if (c !== undefined && peakConnections !== undefined && c > peakConnections) peakConnections = c;
+          } catch (e) {
+            // ignore network/timeout metric errors
+          }
+          if (testRunning) await new Promise(r => setTimeout(r, 1000));
+        }
+      };
+      const metricsPromise = metricLoop();
 
+      const testPodTimeoutSecs = Math.max(testDurationSecs + 300, 300);
       const testOutput = await $`echo ${scriptContent} | kubectl run ${testPodName} --rm -i \
           --image=grafana/k6 \
+          --pod-running-timeout=${testPodTimeoutSecs}s \
           --restart=Never \
           -- run --log-output=stdout -e TARGET_URL=${targetUrl} -e TEST_TYPE=${testType} --vus=${config.test.vus} --duration=${testDurationSecs}s -`.text();
 
       testRunning = false;
-      clearInterval(metricInterval);
+      await metricsPromise;
 
       console.info(`[${competitor}] 📊 Load test '${testType}' complete.`);
       const errorSamples = parseK6Errors(testOutput);
