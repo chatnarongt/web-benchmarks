@@ -397,11 +397,6 @@ async function main() {
     // If we've reached max concurrency, wait for one to finish
     if (activePromises.length >= concurrency) {
       await Promise.race(activePromises);
-      // Remove finished promises
-      // This is a bit naive but works for small concurrency
-      for (let i = 0; i < activePromises.length; i++) {
-        // @ts-ignore - check if promise is resolved (not possible directly, so we filter by actual completion)
-      }
     }
 
     const promise = runCompetitor(competitorConfig, config, finalReport).then(() => {

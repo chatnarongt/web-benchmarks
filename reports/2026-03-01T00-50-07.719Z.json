@@ -1,0 +1,67 @@
+{
+  "startTime": "2026-03-01T00:50:07.719Z",
+  "endTime": "2026-03-01T00:50:12.039Z",
+  "configs": {
+    "competitors": [
+      {
+        "name": "go-gin-mssql",
+        "database": "mssql",
+        "env": {
+          "APP_ENV": "production",
+          "APP_PORT": "3000",
+          "DATABASE_HOST": "mssql-service",
+          "DATABASE_NAME": "Benchmark",
+          "DATABASE_USER": "SA",
+          "DATABASE_PASSWORD": "Benchmark123!"
+        }
+      }
+    ],
+    "test": {
+      "types": [
+        "plaintext",
+        "json-serialization",
+        "read-one",
+        "read-many",
+        "create-one",
+        "create-many",
+        "update-one",
+        "update-many",
+        "delete-one",
+        "delete-many"
+      ],
+      "concurrency": 1,
+      "vus": 256,
+      "duration": "10s",
+      "warmupDuration": "5s",
+      "idleWaitDuration": "5s",
+      "databaseSettleDuration": "auto",
+      "logMode": "info"
+    },
+    "resources": {
+      "replicas": 1,
+      "requests": {
+        "cpu": "1",
+        "memory": "512Mi"
+      },
+      "limits": {
+        "cpu": "1",
+        "memory": "512Mi"
+      }
+    },
+    "databaseResources": {
+      "requests": {
+        "cpu": "4",
+        "memory": "8Gi"
+      },
+      "limits": {
+        "cpu": "4",
+        "memory": "8Gi"
+      }
+    }
+  },
+  "result": {
+    "go-gin-mssql": {
+      "error": "ShellError: Failed with exit code 1"
+    }
+  }
+}
