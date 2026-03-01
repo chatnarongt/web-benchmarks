@@ -41,11 +41,11 @@ func initDB() {
 	// Set connection pool settings from environment variables
 	maxIdleConns := getEnvInt("DATABASE_MAX_IDLE_CONNS", 128)
 	maxOpenConns := getEnvInt("DATABASE_MAX_OPEN_CONNS", 128)
-	connMaxLifetime := getEnvInt("DATABASE_CONN_MAX_LIFETIME_MIN", 30)
+	connMaxLifetime := getEnvInt("DATABASE_CONN_MAX_LIFETIME_SEC", 30)
 
 	db.SetMaxIdleConns(maxIdleConns)
 	db.SetMaxOpenConns(maxOpenConns)
-	db.SetConnMaxLifetime(time.Duration(connMaxLifetime) * time.Minute)
+	db.SetConnMaxLifetime(time.Duration(connMaxLifetime) * time.Second)
 
 	if err := db.Ping(); err != nil {
 		log.Fatalf("Error connecting to the database: %v", err)
