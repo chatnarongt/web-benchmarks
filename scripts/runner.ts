@@ -43,6 +43,95 @@ function formatDuration(seconds: number): string {
     .join(' ');
 }
 
+/**
+ * Runs a k6 load test inside a Kubernetes pod using a ConfigMap-mounted script.
+ *
+ * Instead of piping the script via stdin (which requires a persistent TCP
+ * attach connection that Docker Desktop can silently drop on long tests),
+ * we store the script in a ConfigMap, mount it into the pod, and poll for
+ * completion.  This is fully resilient to network interruptions.
+ */
+async function runK6Pod(
+  podName: string,
+  scriptContent: string,
+  k6Args: string[],
+  timeoutSecs: number,
+  label?: string,
+): Promise<string> {
+  const configMapName = `${podName}-script`;
+  const tmpScriptPath = `/tmp/${configMapName}.js`;
+  const manifestPath = `/tmp/${podName}-pod.json`;
+
+  try {
+    // 1. Write script to a temp file and create/update ConfigMap
+    fs.writeFileSync(tmpScriptPath, scriptContent);
+    await $`timeout 15 kubectl create configmap ${configMapName} --from-file=script.ts=${tmpScriptPath} --dry-run=client -o yaml | kubectl apply -f -`.quiet();
+
+    // 2. Generate Pod manifest with the ConfigMap mounted
+    const podManifest = JSON.stringify({
+      apiVersion: "v1",
+      kind: "Pod",
+      metadata: { name: podName },
+      spec: {
+        restartPolicy: "Never",
+        containers: [{
+          name: "k6",
+          image: "grafana/k6",
+          args: ["run", ...k6Args, "/scripts/script.ts"],
+          volumeMounts: [{ name: "k6-script", mountPath: "/scripts", readOnly: true }],
+        }],
+        volumes: [{ name: "k6-script", configMap: { name: configMapName } }],
+      },
+    });
+    fs.writeFileSync(manifestPath, podManifest);
+
+    // 3. Clean up any leftover pod, then create the new one
+    await $`timeout 15 kubectl delete pod ${podName} --ignore-not-found`.quiet();
+    await $`timeout 15 kubectl apply -f ${manifestPath}`.quiet();
+
+    // 4. Poll for pod completion (no persistent connection needed)
+    const deadline = Date.now() + timeoutSecs * 1000;
+    const startTime = Date.now();
+    let phase = "";
+    let lastLogTime = 0;
+    while (Date.now() < deadline) {
+      try {
+        // Use timeout on kubectl to prevent a single call from hanging the loop
+        phase = (await $`timeout 10 kubectl get pod ${podName} -o jsonpath='{.status.phase}'`.text())
+          .trim().replace(/'/g, '');
+        if (phase === "Succeeded" || phase === "Failed") break;
+      } catch { /* pod may not exist yet or kubectl timed out */ }
+
+      // Log progress every 30s so the user knows it's not stuck
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      if (elapsed - lastLogTime >= 30) {
+        lastLogTime = elapsed;
+        const tag = label ? `[${label}] ` : '';
+        console.debug(`${tag}⏳ k6 pod '${podName}' still running... (${formatDuration(elapsed)} elapsed, phase: ${phase || 'Pending'})`);
+      }
+
+      await new Promise(r => setTimeout(r, 2000));
+    }
+
+    if (phase !== "Succeeded" && phase !== "Failed") {
+      throw new Error(`Pod ${podName} timed out after ${timeoutSecs}s (last phase: ${phase})`);
+    }
+
+    // 5. Capture logs (with timeout to prevent hanging on large output)
+    try {
+      return await $`timeout 30 kubectl logs ${podName}`.text();
+    } catch {
+      return "";
+    }
+  } finally {
+    // 6. Cleanup pod, configmap, temp files
+    await $`timeout 10 kubectl delete pod ${podName} --ignore-not-found --force --grace-period=0`.quiet().catch(() => { });
+    await $`timeout 10 kubectl delete configmap ${configMapName} --ignore-not-found`.quiet().catch(() => { });
+    try { fs.unlinkSync(tmpScriptPath); } catch { }
+    try { fs.unlinkSync(manifestPath); } catch { }
+  }
+}
+
 async function runCompetitor(competitorConfig: CompetitorConfig, config: BenchmarkConfig, finalReport: Record<string, any>) {
   const isVerbose = config.test.logMode === "verbose";
   const competitor = competitorConfig.name;
@@ -200,15 +289,16 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       if (warmupSecs > 0) {
         console.debug('');
         console.info(`[${competitor}] 🔥 Warming up for '${testType}' (${warmupDuration})...`);
-        const podTimeoutSecs = Math.max(warmupSecs + 300, 300);
+        const warmupTimeoutSecs = warmupSecs + 120;
         try {
-          await $`echo ${scriptContent} | kubectl run ${warmupPodName} --rm -i \
-                        --image=grafana/k6 \
-                        --pod-running-timeout=${podTimeoutSecs}s \
-                        --restart=Never \
-                        -- run -e TARGET_URL=${targetUrl} -e TEST_TYPE=${testType} --vus=${config.test.vus} --duration=${warmupSecs}s -`.quiet();
+          await runK6Pod(warmupPodName, scriptContent, [
+            "-e", `TARGET_URL=${targetUrl}`,
+            "-e", `TEST_TYPE=${testType}`,
+            `--vus=${config.test.vus}`,
+            `--duration=${warmupSecs}s`,
+          ], warmupTimeoutSecs, competitor);
         } catch (e) {
-          console.warn(`[${competitor}] ⚠️ Warmup failed (ignoring):`, e);
+          console.warn(`[${competitor}] ⚠️ Warmup failed or timed out (ignoring):`, e);
         }
       } else {
         console.debug('');
@@ -234,15 +324,9 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       const rawTestName = `k6-t-${competitor}-${sanitizedTestType}`;
       const testPodName = rawTestName.substring(0, 63).replace(/-+$/, '').toLowerCase();
 
-      console.info(`[${competitor}] 🧨 Running load test '${testType}' with 'k6' for ${config.test.duration}...`);
-
-      // Run k6 and capture output. We run it as a standalone Pod passing script via stdin.
       const testDurationSecs = parseTimeToSeconds(config.test.duration);
-      const k6Command = `k6 run --vus ${config.test.vus} --duration ${testDurationSecs}s -e TARGET_URL=${targetUrl} -e TEST_TYPE=${testType}`;
-      console.debug(`[${competitor}] Executing: ${k6Command} from inside cluster...`);
-
-      // Ensure any leftover pod is deleted
-      await $`kubectl delete pod ${testPodName} --ignore-not-found`.quiet();
+      console.info(`[${competitor}] 🧨 Running load test '${testType}' with 'k6' for ${config.test.duration}...`);
+      console.debug(`[${competitor}] Executing: k6 run --vus ${config.test.vus} --duration ${testDurationSecs}s -e TARGET_URL=${targetUrl} -e TEST_TYPE=${testType} from inside cluster...`);
 
       // Start tracking peak metrics in the background.
       // Seed with idle values so that if kubectl top transiently fails during
@@ -276,15 +360,28 @@ async function runCompetitor(competitorConfig: CompetitorConfig, config: Benchma
       };
       const metricsPromise = metricLoop();
 
-      const testPodTimeoutSecs = Math.max(testDurationSecs + 300, 300);
-      const testOutput = await $`echo ${scriptContent} | kubectl run ${testPodName} --rm -i \
-          --image=grafana/k6 \
-          --pod-running-timeout=${testPodTimeoutSecs}s \
-          --restart=Never \
-          -- run --log-output=stdout -e TARGET_URL=${targetUrl} -e TEST_TYPE=${testType} --vus=${config.test.vus} --duration=${testDurationSecs}s -`.text();
+      const testTimeoutSecs = testDurationSecs + 120;
+      let testOutput: string;
+      try {
+        testOutput = await runK6Pod(testPodName, scriptContent, [
+          "--log-output=stdout",
+          "-e", `TARGET_URL=${targetUrl}`,
+          "-e", `TEST_TYPE=${testType}`,
+          `--vus=${config.test.vus}`,
+          `--duration=${testDurationSecs}s`,
+        ], testTimeoutSecs, competitor);
+      } catch (e) {
+        console.warn(`[${competitor}] ⚠️ Load test '${testType}' timed out or failed:`, e);
+        testOutput = String(e);
+      }
 
       testRunning = false;
-      await metricsPromise;
+      // Give metrics loop a short window to exit; don't block forever if
+      // a kubectl call inside the loop is hung.
+      await Promise.race([
+        metricsPromise,
+        new Promise(r => setTimeout(r, 5000))
+      ]);
 
       console.info(`[${competitor}] 📊 Load test '${testType}' complete.`);
       const errorSamples = parseK6Errors(testOutput);

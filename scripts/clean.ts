@@ -53,9 +53,10 @@ async function main() {
             console.log(`- No competitor resources found to delete.`);
         }
 
-        // Delete k6 pods for these competitors
+        // Delete k6 pods and script ConfigMaps for these competitors
         const podsOutput = await $`kubectl get pods --no-headers -o custom-columns=":metadata.name"`.text();
         const allPods = podsOutput.split("\n").map(p => p.trim()).filter(Boolean);
+        const k6ConfigMapsToDelete: string[] = [];
 
         for (const competitorConfig of config.competitors) {
             const competitor = competitorConfig.name;
@@ -68,11 +69,22 @@ async function main() {
                 p.startsWith(testPrefix)
             );
             podsToDelete.push(...competitorPods);
+
+            // Also clean up k6 script ConfigMaps from the ConfigMap-based runner
+            const competitorConfigmaps = [...existingConfigmaps].filter(cm =>
+                cm.startsWith(warmupPrefix) && cm.endsWith('-script') ||
+                cm.startsWith(testPrefix) && cm.endsWith('-script')
+            );
+            k6ConfigMapsToDelete.push(...competitorConfigmaps);
         }
 
         if (podsToDelete.length > 0) {
             console.log(`- Deleting ${podsToDelete.length} lingering k6 pods...`);
             await $`kubectl delete pod ${podsToDelete} --ignore-not-found`.quiet();
+        }
+        if (k6ConfigMapsToDelete.length > 0) {
+            console.log(`- Deleting ${k6ConfigMapsToDelete.length} lingering k6 script ConfigMaps...`);
+            await $`kubectl delete configmap ${k6ConfigMapsToDelete} --ignore-not-found`.quiet();
         }
     } catch (e) {
         console.error("Cleanup error:", e);
