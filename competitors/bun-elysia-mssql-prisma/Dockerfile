@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM oven/bun:1.3.9-alpine AS base
+FROM oven/bun:1.3.14-alpine AS base
 RUN apk update && apk upgrade --no-cache
 RUN apk add --no-cache libc6-compat
 WORKDIR /app

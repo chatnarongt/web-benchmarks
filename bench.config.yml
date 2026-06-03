@@ -33,76 +33,76 @@ competitors:
       DATABASE_ENCRYPT: "false"
       DATABASE_TRUST_SERVER_CERTIFICATE: "true"
 
-  - name: dotnet-mvc-mssql-ef
-    database: mssql
-    pool:
-      minSize: 0
-      maxSize: 128
-      lifetime: 30
-      encrypt: false
-      trustServerCertificate: true
-    env:
-      ConnectionStrings__BenchmarkDatabase: >-
-        Server=mssql-service;
-        Database=Benchmark;
-        User Id=SA;
-        Password=Benchmark123!;
+  # - name: dotnet-mvc-mssql-ef
+  #   database: mssql
+  #   pool:
+  #     minSize: 0
+  #     maxSize: 128
+  #     lifetime: 30
+  #     encrypt: false
+  #     trustServerCertificate: true
+  #   env:
+  #     ConnectionStrings__BenchmarkDatabase: >-
+  #       Server=mssql-service;
+  #       Database=Benchmark;
+  #       User Id=SA;
+  #       Password=Benchmark123!;
 
-  - name: dotnet-mvc-mssql-ef-async
-    database: mssql
-    pool:
-      minSize: 0
-      maxSize: 128
-      lifetime: 30
-      encrypt: false
-      trustServerCertificate: true
-    env:
-      ConnectionStrings__BenchmarkDatabase: >-
-        Server=mssql-service;
-        Database=Benchmark;
-        User Id=SA;
-        Password=Benchmark123!;
+  # - name: dotnet-mvc-mssql-ef-async
+  #   database: mssql
+  #   pool:
+  #     minSize: 0
+  #     maxSize: 128
+  #     lifetime: 30
+  #     encrypt: false
+  #     trustServerCertificate: true
+  #   env:
+  #     ConnectionStrings__BenchmarkDatabase: >-
+  #       Server=mssql-service;
+  #       Database=Benchmark;
+  #       User Id=SA;
+  #       Password=Benchmark123!;
 
-  - name: dotnet-mvc-mssql-ef-async-optimized
-    database: mssql
-    pool:
-      minSize: 0
-      maxSize: 128
-      lifetime: 30
-      encrypt: false
-      trustServerCertificate: true
-    env:
-      ConnectionStrings__BenchmarkDatabase: >-
-        Server=mssql-service;
-        Database=Benchmark;
-        User Id=SA;
-        Password=Benchmark123!;
+  # - name: dotnet-mvc-mssql-ef-async-optimized
+  #   database: mssql
+  #   pool:
+  #     minSize: 0
+  #     maxSize: 128
+  #     lifetime: 30
+  #     encrypt: false
+  #     trustServerCertificate: true
+  #   env:
+  #     ConnectionStrings__BenchmarkDatabase: >-
+  #       Server=mssql-service;
+  #       Database=Benchmark;
+  #       User Id=SA;
+  #       Password=Benchmark123!;
 
-  - name: go-gin-mssql
-    database: mssql
-    env:
-      APP_ENV: production
-      APP_PORT: "3000"
-      DATABASE_HOST: mssql-service
-      DATABASE_NAME: Benchmark
-      DATABASE_USER: SA
-      DATABASE_PASSWORD: Benchmark123!
-      DATABASE_MAX_IDLE_CONNS: "128"
-      DATABASE_MAX_OPEN_CONNS: "128"
-      DATABASE_CONN_MAX_LIFETIME_SEC: "30"
+  # - name: go-gin-mssql
+  #   database: mssql
+  #   env:
+  #     APP_ENV: production
+  #     APP_PORT: "3000"
+  #     DATABASE_HOST: mssql-service
+  #     DATABASE_NAME: Benchmark
+  #     DATABASE_USER: SA
+  #     DATABASE_PASSWORD: Benchmark123!
+  #     DATABASE_MAX_IDLE_CONNS: "128"
+  #     DATABASE_MAX_OPEN_CONNS: "128"
+  #     DATABASE_CONN_MAX_LIFETIME_SEC: "30"
 
-  - name: go-fiber-mssql
-    database: mssql
-    env:
-      APP_ENV: production
-      APP_PORT: "3000"
-      DATABASE_HOST: mssql-service
-      DATABASE_NAME: Benchmark
-      DATABASE_USER: SA
-      DATABASE_PASSWORD: Benchmark123!
-      DATABASE_MAX_IDLE_CONNS: "128"
-      DATABASE_MAX_OPEN_CONNS: "128"
-      DATABASE_CONN_MAX_LIFETIME_SEC: "30"
+  # - name: go-fiber-mssql
+  #   database: mssql
+  #   env:
+  #     APP_ENV: production
+  #     APP_PORT: "3000"
+  #     DATABASE_HOST: mssql-service
+  #     DATABASE_NAME: Benchmark
+  #     DATABASE_USER: SA
+  #     DATABASE_PASSWORD: Benchmark123!
+  #     DATABASE_MAX_IDLE_CONNS: "128"
+  #     DATABASE_MAX_OPEN_CONNS: "128"
+  #     DATABASE_CONN_MAX_LIFETIME_SEC: "30"
 
 test:
   types:
@@ -122,7 +122,7 @@ test:
   warmupDuration: 1m # Default: 1m, duration of the warm-up test before the actual benchmark
   idleWaitDuration: 1m # Default: 1m, duration to wait after warmup before starting the actual test
   databaseSettleDuration: "auto" # Default: "auto". Will automatically set a settle duration based on how many rows seed due to VUs.
-  logMode: "info" # "verbose", "info", "summary" or "silent"
+  logMode: "verbose" # "verbose", "info", "summary" or "silent"
 
 resources: # Resources for the competitors
   replicas: 1
